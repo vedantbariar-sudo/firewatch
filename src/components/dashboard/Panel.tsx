@@ -2,8 +2,7 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 interface PanelProps {
-  title: string;
-  icon?: ReactNode;
+  title?: string;
   right?: ReactNode;
   children: ReactNode;
   className?: string;
@@ -13,7 +12,6 @@ interface PanelProps {
 /** Single bordered block used by every dashboard panel. */
 export function Panel({
   title,
-  icon,
   right,
   children,
   className,
@@ -26,14 +24,15 @@ export function Panel({
         className,
       )}
     >
-      <header className="flex items-center justify-between gap-3 border-b border-border/60 px-4 py-2.5">
-        <h2 className="flex items-center gap-2 text-sm font-semibold tracking-tight text-foreground">
-          {icon}
-          {title}
-        </h2>
-        {right}
-      </header>
-      <div className={cn("p-4", contentClassName)}>{children}</div>
+      {title && (
+        <header className="flex items-center justify-between gap-3 px-4 pb-2 pt-3.5">
+          <h2 className="text-[15px] font-semibold tracking-tight text-foreground">
+            {title}
+          </h2>
+          {right}
+        </header>
+      )}
+      <div className={cn("px-4 pb-4", contentClassName)}>{children}</div>
     </section>
   );
 }

@@ -6,13 +6,7 @@ import { incidentApi } from "@/lib/api";
 import { RISK_META } from "@/lib/status";
 import type { FireIncident } from "@/types";
 import logo from "@/assets/logo.svg";
-import {
-  ArrowRight,
-  Flame,
-  Route,
-  Satellite,
-  Wind,
-} from "lucide-react";
+import { ArrowRight, Route, Satellite, Wind } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 
@@ -190,14 +184,9 @@ export default function Landing() {
                   <Skeleton className="h-[340px] w-full rounded-none sm:h-[420px]" />
                 )}
                 <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border/70 bg-card/60 px-4 py-2.5 text-xs">
-                  <span className="flex items-center gap-1.5 font-medium">
-                    <Flame className="size-3.5 text-orange-400" />
-                    Ridge Fire — Lake Arrowhead, CA
-                  </span>
+                  <span className="font-medium">Ridge Fire — Lake Arrowhead, CA</span>
                   <span className="flex items-center gap-3 text-muted-foreground">
                     <span>Containment 12%</span>
-                    <span className="text-border">·</span>
-                    <span>Wind NE 32 km/h</span>
                     <span className="text-border">·</span>
                     <span className="font-medium text-rose-400">
                       {RISK_META.extreme.label} risk
@@ -210,25 +199,6 @@ export default function Landing() {
                 going, and the best way out.
               </p>
             </motion.div>
-          </div>
-        </section>
-
-        {/* Stats band */}
-        <section className="border-y border-border/60 bg-card/40">
-          <div className="mx-auto grid max-w-6xl grid-cols-2 gap-px overflow-hidden px-4 py-8 sm:grid-cols-4 lg:px-6">
-            {[
-              { value: "24 hours", label: "Forecast window" },
-              { value: "3", label: "Fires tracked" },
-              { value: "4,820", label: "Acres being tracked" },
-              { value: "2", label: "Shelters ready" },
-            ].map((stat) => (
-              <div key={stat.label} className="px-4 py-2 text-center">
-                <p className="text-2xl font-semibold tabular-nums tracking-tight">
-                  {stat.value}
-                </p>
-                <p className="mt-1 text-xs text-muted-foreground">{stat.label}</p>
-              </div>
-            ))}
           </div>
         </section>
 

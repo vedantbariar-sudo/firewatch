@@ -1,4 +1,3 @@
-import { useAuth } from "@/hooks/use-auth";
 import { incidentApi } from "@/lib/api";
 import type { FireIncident } from "@/types";
 import { ALL_LAYERS, FireMap } from "@/components/map/FireMap";
@@ -14,11 +13,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
-import { ArrowUpRight, Radio, Route } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import { Link } from "react-router";
 
 export default function Dashboard() {
-  const { user } = useAuth();
   const navigate = useNavigate();
   const [incidents, setIncidents] = useState<FireIncident[] | null>(null);
   const [selectedId, setSelectedId] = useState("ridge-fire");
@@ -33,7 +31,6 @@ export default function Dashboard() {
 
   const incident =
     incidents?.find((item) => item.id === selectedId) ?? null;
-  const firstName = user?.name?.split(" ")[0] || "";
 
   const handleSelectIncident = (id: string) => {
     setSelectedId(id);
@@ -66,23 +63,17 @@ export default function Dashboard() {
         {/* Page header */}
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <p className="text-sm font-medium text-muted-foreground">
-              Dashboard
-            </p>
-            <h1 className="mt-0.5 text-3xl font-semibold tracking-tight">
-              {firstName ? `Hello, ${firstName}` : "Today's fire situation"}
+            <h1 className="text-2xl font-semibold tracking-tight">
+              Today&apos;s fire situation
             </h1>
-            <p className="mt-1 text-[15px] text-muted-foreground">
-              Here&apos;s what is happening right now.
+            <p className="mt-0.5 text-sm text-muted-foreground">
+              {incident.name} · {incident.locationLabel}
             </p>
           </div>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <span className="flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 font-medium text-emerald-400">
-              <Radio className="size-3 animate-pulse" />
-              Live
-            </span>
-            <span>Updated a few minutes ago</span>
-          </div>
+          <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
+            <span className="size-1.5 animate-pulse rounded-full bg-emerald-400" />
+            Live
+          </span>
         </div>
 
         <StatsStrip incident={incident} />
@@ -94,17 +85,15 @@ export default function Dashboard() {
           );
           if (!recommended) return null;
           return (
-            <div className="flex flex-wrap items-center gap-3 rounded-xl border border-emerald-500/30 bg-emerald-500/[0.07] px-4 py-3">
-              <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-400">
-                <Route className="size-5" />
-              </span>
+            <div className="flex flex-wrap items-center gap-3 rounded-xl border border-emerald-500/25 bg-emerald-500/[0.05] px-4 py-3">
+              <span className="size-2 shrink-0 rounded-full bg-emerald-400" />
               <div className="min-w-0 flex-1">
-                <p className="text-[15px] font-semibold text-foreground">
+                <p className="text-sm font-semibold text-foreground">
                   {stepIndex === 0
                     ? `Recommended route now: ${recommended.name}`
                     : `Recommended route later: ${recommended.name}`}
                 </p>
-                <p className="mt-0.5 text-sm leading-6 text-muted-foreground">
+                <p className="mt-0.5 text-[13px] leading-6 text-muted-foreground">
                   {stepIndex === 0
                     ? "If you are in the affected area, this is the safest way out. "
                     : "This route is expected to stay clear as the fire moves. "}
@@ -114,7 +103,7 @@ export default function Dashboard() {
               <Button
                 type="button"
                 variant="outline"
-                size="lg"
+                size="sm"
                 className="cursor-pointer"
                 onClick={() => setSelectedRouteId(recommended.id)}
               >

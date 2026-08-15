@@ -72,9 +72,9 @@ export const SEVERITY_META: Record<
 
 export const INCIDENT_STATUS_META: Record<
   IncidentStatus,
-  { label: string; className: string }
+  { label: string; className: string; text: string }
 > = {
-  active: { label: "Active", className: "border-red-500/40 bg-red-500/10 text-red-400" },
-  contained: { label: "Contained", className: "border-emerald-500/40 bg-emerald-500/10 text-emerald-400" },
-  watch: { label: "Watch", className: "border-amber-500/40 bg-amber-500/10 text-amber-400" },
+  active: { label: "Active", className: "border-red-500/40 bg-red-500/10 text-red-400", text: "text-red-400" },
+  contained: { label: "Contained", className: "border-emerald-500/40 bg-emerald-500/10 text-emerald-400", text: "text-emerald-400" },
+  watch: { label: "Watch", className: "border-amber-500/40 bg-amber-500/10 text-amber-400", text: "text-amber-400" },
 };

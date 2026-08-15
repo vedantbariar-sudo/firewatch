@@ -1,4 +1,3 @@
-import { Home, Users } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { SHELTER_META } from "@/lib/status";
 import { cn } from "@/lib/utils";
@@ -19,9 +18,8 @@ export function SheltersPanel({
   return (
     <Panel
       title="Shelters"
-      icon={<Home className="size-4 text-sky-400" />}
       right={
-        <span className="text-[11px] text-muted-foreground">
+        <span className="text-xs text-muted-foreground">
           {incident.shelters.filter((s) => s.status === "open").length} open
         </span>
       }
@@ -44,30 +42,22 @@ export function SheltersPanel({
                     : "border-transparent hover:bg-accent/60",
                 )}
               >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-[15px] font-semibold leading-6">
-                      {shelter.name}
-                    </p>
-                    <p className="mt-0.5 flex items-center gap-1 text-[13px] text-muted-foreground">
-                      <Users className="size-3.5" />
-                      {shelter.occupied} / {shelter.capacity} occupied
-                    </p>
-                  </div>
+                <div className="flex items-baseline justify-between gap-3">
+                  <p className="text-[15px] font-semibold leading-6">
+                    {shelter.name}
+                  </p>
                   <span
                     className={cn(
-                      "shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
-                      meta.dot === "bg-emerald-400" &&
-                        "border-emerald-500/40 bg-emerald-500/10 text-emerald-400",
-                      meta.dot === "bg-amber-400" &&
-                        "border-amber-500/40 bg-amber-500/10 text-amber-400",
-                      meta.dot === "bg-red-400" &&
-                        "border-red-500/40 bg-red-500/10 text-red-400",
+                      "shrink-0 text-xs font-medium",
+                      meta.text,
                     )}
                   >
                     {meta.label}
                   </span>
                 </div>
+                <p className="mt-0.5 text-[13px] text-muted-foreground">
+                  {shelter.occupied} / {shelter.capacity} occupied
+                </p>
                 <Progress value={pct} className="mt-2.5 h-1.5" />
               </button>
             </li>

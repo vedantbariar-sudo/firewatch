@@ -7,8 +7,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Toggle } from "@/components/ui/toggle";
-import { Layers } from "lucide-react";
+import { cn } from "@/lib/utils";
 import type { FireIncident } from "@/types";
 import type { LayerState } from "@/components/map/FireMap";
 
@@ -43,7 +42,7 @@ export function MapToolbar({
   ];
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border/70 bg-card/50 px-3 py-2">
+    <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-xl border border-border/70 bg-card/50 px-3 py-2">
       <div className="flex flex-wrap items-center gap-2">
         {incidents && onSelectIncident && (
           <Select value={selectedIncidentId} onValueChange={onSelectIncident}>
@@ -66,7 +65,11 @@ export function MapToolbar({
         >
           <TabsList className="h-8">
             {steps.map((step, index) => (
-              <TabsTrigger key={step} value={String(index)} className="px-3 text-[13px]">
+              <TabsTrigger
+                key={step}
+                value={String(index)}
+                className="px-3 text-[13px]"
+              >
                 {step}
               </TabsTrigger>
             ))}
@@ -74,25 +77,22 @@ export function MapToolbar({
         </Tabs>
       </div>
 
-      <div className="flex flex-wrap items-center gap-1.5">
-        <span className="mr-1 flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-          <Layers className="size-4" />
-          Show:
-        </span>
+      <div className="flex flex-wrap items-center gap-1">
         {layerButtons.map(({ key, label }) => (
-          <Toggle
+          <button
             key={key}
-            size="sm"
-            variant="outline"
-            pressed={layers[key]}
-            onPressedChange={(pressed) =>
-              onLayersChange({ ...layers, [key]: pressed })
-            }
-            aria-label={`Toggle ${label} layer`}
-            className="h-8 px-3 text-[13px]"
+            type="button"
+            aria-pressed={layers[key]}
+            onClick={() => onLayersChange({ ...layers, [key]: !layers[key] })}
+            className={cn(
+              "h-8 cursor-pointer rounded-md px-3 text-[13px] font-medium transition-colors",
+              layers[key]
+                ? "bg-accent text-foreground"
+                : "text-muted-foreground hover:text-foreground",
+            )}
           >
             {label}
-          </Toggle>
+          </button>
         ))}
         {right}
       </div>

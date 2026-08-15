@@ -15,18 +15,8 @@ import { useAuth } from "@/hooks/use-auth";
 import logo from "@/assets/logo.svg";
 import { LogOut, ShieldCheck } from "lucide-react";
 import type { ReactNode } from "react";
-import { useEffect, useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router";
 import { cn } from "@/lib/utils";
-
-function useClock() {
-  const [now, setNow] = useState(() => new Date());
-  useEffect(() => {
-    const timer = setInterval(() => setNow(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
-  return now;
-}
 
 function navClass({ isActive }: { isActive: boolean }) {
   return cn(
@@ -45,7 +35,6 @@ interface AppShellProps {
 export function AppShell({ children, active }: AppShellProps) {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
-  const now = useClock();
 
   const handleSignOut = async () => {
     try {
@@ -89,15 +78,6 @@ export function AppShell({ children, active }: AppShellProps) {
           </nav>
 
           <div className="ml-auto flex items-center gap-2.5">
-            <div className="hidden items-center gap-1.5 text-xs text-muted-foreground md:flex">
-              <span className="size-1.5 animate-pulse rounded-full bg-emerald-400" />
-              <span className="tabular-nums">
-                {now.toLocaleTimeString([], { hour12: false })}
-              </span>
-              <span className="text-border">·</span>
-              <span>Live</span>
-            </div>
-
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button

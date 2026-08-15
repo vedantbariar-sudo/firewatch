@@ -1,38 +1,8 @@
 import { Progress } from "@/components/ui/progress";
-import {
-  ArrowUp,
-  Cloud,
-  Droplets,
-  Flame,
-  Thermometer,
-  Wind,
-} from "lucide-react";
 import { RISK_META, RISK_ORDER } from "@/lib/status";
-import { timeAgo, windArrowRotation, windCardinal } from "@/lib/format";
+import { timeAgo, windCardinal } from "@/lib/format";
 import type { FireIncident } from "@/types";
 import { Panel } from "./Panel";
-
-function Stat({
-  label,
-  value,
-  sub,
-}: {
-  label: string;
-  value: string;
-  sub?: React.ReactNode;
-}) {
-  return (
-    <div>
-      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-        {label}
-      </p>
-      <p className="mt-0.5 text-xl font-semibold tabular-nums tracking-tight">
-        {value}
-      </p>
-      {sub}
-    </div>
-  );
-}
 
 interface SituationPanelProps {
   incident: FireIncident;
@@ -44,7 +14,8 @@ interface SituationPanelProps {
  * light internal dividers — one visual unit instead of three separate cards.
  */
 export function SituationPanel({ incident, stepIndex }: SituationPanelProps) {
-  const step = incident.forecast[Math.min(stepIndex, incident.forecast.length - 1)];
+  const step =
+    incident.forecast[Math.min(stepIndex, incident.forecast.length - 1)];
   const weather = step.weather;
   const risk = RISK_META[step.riskLevel];
   const stats = incident.stats;
@@ -56,16 +27,8 @@ export function SituationPanel({ incident, stepIndex }: SituationPanelProps) {
   return (
     <Panel
       title="Situation"
-      icon={<Flame className="size-4 text-orange-400" />}
       right={
-        <span
-          className="rounded-full border px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide"
-          style={{
-            color: risk.color,
-            borderColor: `${risk.color}66`,
-            backgroundColor: `${risk.color}14`,
-          }}
-        >
+        <span className="text-sm font-medium" style={{ color: risk.color }}>
           {risk.label} risk
         </span>
       }
@@ -73,104 +36,88 @@ export function SituationPanel({ incident, stepIndex }: SituationPanelProps) {
     >
       <div className="divide-y divide-border/60">
         {/* Fire status */}
-        <div className="grid grid-cols-3 gap-3 p-4">
-          <Stat
-            label="Containment"
-            value={`${stats.containmentPct}%`}
-            sub={<Progress value={stats.containmentPct} className="mt-1.5" />}
-          />
-          <Stat label="Acres burned" value={stats.acresBurned.toLocaleString()} />
-          <Stat
-            label="Satellite pass"
-            value={timeAgo(Date.now() - stats.lastSatellitePassMin * 60_000)}
-            sub={
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                last check
-              </p>
-            }
-          />
+        <div className="grid grid-cols-2 gap-x-4 gap-y-3 px-4 py-3.5">
+          <div>
+            <p className="text-xs text-muted-foreground">Containment</p>
+            <p className="mt-1 text-xl font-semibold tabular-nums tracking-tight">
+              {stats.containmentPct}%
+            </p>
+            <Progress value={stats.containmentPct} className="mt-2 h-1.5" />
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">Acres burned</p>
+            <p className="mt-1 text-xl font-semibold tabular-nums tracking-tight">
+              {stats.acresBurned.toLocaleString()}
+            </p>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Satellite pass{" "}
+              {timeAgo(Date.now() - stats.lastSatellitePassMin * 60_000)}
+            </p>
+          </div>
         </div>
 
         {/* Weather */}
-        <div className="p-4">
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Weather — {step.label}
-          </p>
-          <div className="mt-2 grid grid-cols-[auto_1fr] items-start gap-4">
-            <div className="flex items-start gap-1.5">
-              <Thermometer className="mt-1 size-4 text-amber-400" />
-              <div>
-                <span className="text-3xl font-semibold tabular-nums tracking-tight">
-                  {weather.tempC}°
-                </span>
-                <span className="ml-1 text-sm text-muted-foreground">C</span>
-                <p className="mt-0.5 max-w-[150px] text-xs leading-5 text-muted-foreground">
-                  {weather.conditions}
-                </p>
-              </div>
+        <div className="px-4 py-3.5">
+          <div className="flex items-baseline justify-between gap-3">
+            <p className="text-sm font-medium text-foreground">Weather</p>
+            <p className="text-xs text-muted-foreground">{step.label}</p>
+          </div>
+          <div className="mt-2.5 flex items-end justify-between gap-4">
+            <div>
+              <span className="text-3xl font-semibold tabular-nums tracking-tight">
+                {weather.tempC}°
+              </span>
+              <span className="ml-1.5 text-sm text-muted-foreground">
+                C · {weather.conditions}
+              </span>
             </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between gap-3 rounded-lg bg-muted/50 px-3 py-2">
-                <span className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Wind className="size-3.5 text-sky-400" />
-                  Wind
+            <div className="space-y-1 text-right text-sm">
+              <p className="text-muted-foreground">
+                Wind{" "}
+                <span className="font-medium text-foreground">
+                  {weather.windSpeedKmh} km/h{" "}
+                  {windCardinal(weather.windDirectionDeg)}
                 </span>
-                <span className="flex items-center gap-2 text-sm font-medium tabular-nums">
-                  <ArrowUp
-                    className="size-3.5 text-sky-400"
-                    style={{
-                      transform: `rotate(${windArrowRotation(weather.windDirectionDeg)}deg)`,
-                    }}
-                  />
-                  {weather.windSpeedKmh} km/h · {windCardinal(weather.windDirectionDeg)}
-                </span>
-              </div>
-              <div className="flex items-center justify-between gap-3 rounded-lg bg-muted/50 px-3 py-2">
-                <span className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Droplets className="size-3.5 text-sky-400" />
-                  Humidity
-                </span>
-                <span className="text-sm font-medium tabular-nums">
+              </p>
+              <p className="text-muted-foreground">
+                Humidity{" "}
+                <span className="font-medium text-foreground">
                   {weather.humidityPct}%
                 </span>
-              </div>
+              </p>
               {weather.windGustKmh && (
-                <div className="flex items-center justify-between gap-3 rounded-lg bg-muted/50 px-3 py-2">
-                  <span className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Cloud className="size-3.5 text-sky-400" />
-                    Gusts
-                  </span>
-                  <span className="text-sm font-medium tabular-nums">
+                <p className="text-muted-foreground">
+                  Gusts{" "}
+                  <span className="font-medium text-foreground">
                     {weather.windGustKmh} km/h
                   </span>
-                </div>
+                </p>
               )}
             </div>
           </div>
         </div>
 
-        {/* Model outlook */}
-        <div className="p-4">
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Fire spread — {step.spreadKmh} km/h
+        {/* Spread outlook */}
+        <div className="px-4 py-3.5">
+          <p className="text-sm font-medium text-foreground">
+            Fire spread · {step.spreadKmh} km/h
           </p>
-          <p className="mt-1.5 text-[15px] leading-7 text-foreground/90">
+          <p className="mt-1 text-sm leading-6 text-muted-foreground">
             {step.riskNote}
           </p>
-          <div className="mt-3 flex flex-wrap gap-1.5">
-            {zoneLevels.map((level) => (
-              <span
-                key={level}
-                className="rounded-full border px-2 py-0.5 text-[11px] font-medium"
-                style={{
-                  color: RISK_META[level].color,
-                  borderColor: `${RISK_META[level].color}55`,
-                }}
-              >
-                {RISK_META[level].label} risk
-              </span>
-            ))}
-          </div>
+          {zoneLevels.length > 0 && (
+            <p className="mt-2 text-xs text-muted-foreground">
+              Zones at risk:{" "}
+              {zoneLevels.map((level, index) => (
+                <span key={level}>
+                  {index > 0 && ", "}
+                  <span style={{ color: RISK_META[level].color }}>
+                    {RISK_META[level].label.toLowerCase()}
+                  </span>
+                </span>
+              ))}
+            </p>
+          )}
         </div>
       </div>
     </Panel>

@@ -3,7 +3,6 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { incidentApi } from "@/lib/api";
 import { INCIDENT_STATUS_META, RISK_META } from "@/lib/status";
-import { timeAgo } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { FireIncident, IncidentStatus } from "@/types";
 import { ArrowUpRight, Flame, Search } from "lucide-react";
@@ -23,28 +22,19 @@ function IncidentRow({ incident }: { incident: FireIncident }) {
   return (
     <Link
       to={`/incidents/${incident.id}`}
-      className="group flex items-center justify-between gap-4 rounded-xl border border-border/70 bg-card/50 p-4 transition-colors hover:border-border hover:bg-accent/40"
+      className="group flex items-center justify-between gap-4 rounded-xl border border-border/70 bg-card/50 px-4 py-3.5 transition-colors hover:border-border hover:bg-accent/40"
     >
       <div className="flex min-w-0 items-center gap-3.5">
-        <span
-          className={cn(
-            "flex size-10 shrink-0 items-center justify-center rounded-lg border",
-            incident.status === "active"
-              ? "border-orange-500/30 bg-orange-500/10 text-orange-400"
-              : incident.status === "contained"
-                ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
-                : "border-amber-500/30 bg-amber-500/10 text-amber-400",
-          )}
-        >
-          <Flame className="size-5" />
-        </span>
+        <Flame className="size-5 shrink-0 text-orange-400" />
         <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <h3 className="text-base font-semibold tracking-tight">{incident.name}</h3>
+          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+            <h3 className="text-base font-semibold tracking-tight">
+              {incident.name}
+            </h3>
             <span
               className={cn(
-                "rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
-                statusMeta.className,
+                "text-xs font-medium",
+                statusMeta.text,
               )}
             >
               {statusMeta.label}
@@ -54,37 +44,19 @@ function IncidentRow({ incident }: { incident: FireIncident }) {
             {incident.locationLabel} · {incident.county}
           </p>
         </div>
-      </div>        <div className="hidden shrink-0 grid-cols-[100px_110px_90px_90px] items-center gap-6 text-right md:grid">
+      </div>
+
+      <div className="hidden shrink-0 items-center gap-8 text-right sm:flex">
         <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Acres
-          </p>
-          <p className="text-[15px] font-semibold tabular-nums">
-            {incident.stats.acresBurned.toLocaleString()}
-          </p>
-        </div>
-        <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Containment
-          </p>
-          <p className="text-[15px] font-semibold tabular-nums">
+          <p className="text-xs text-muted-foreground">Containment</p>
+          <p className="mt-0.5 text-[15px] font-semibold tabular-nums">
             {incident.stats.containmentPct}%
           </p>
         </div>
         <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Risk
-          </p>
-          <p className="text-[15px] font-semibold" style={{ color: risk.color }}>
+          <p className="text-xs text-muted-foreground">Risk</p>
+          <p className="mt-0.5 text-[15px] font-semibold" style={{ color: risk.color }}>
             {risk.label}
-          </p>
-        </div>
-        <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Updated
-          </p>
-          <p className="text-[15px] text-foreground/80">
-            {timeAgo(new Date(incident.reportedAt))}
           </p>
         </div>
       </div>

@@ -91,37 +91,20 @@ export default function IncidentDetail() {
 
         {/* Header */}
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <span
-              className={cn(
-                "flex size-11 shrink-0 items-center justify-center rounded-xl border",
-                incident.status === "active"
-                  ? "border-orange-500/30 bg-orange-500/10 text-orange-400"
-                  : "border-emerald-500/30 bg-emerald-500/10 text-emerald-400",
-              )}
-            >
-              <Flame className="size-5" />
-            </span>
-            <div>
-              <div className="flex flex-wrap items-center gap-2">
-                <h1 className="text-2xl font-semibold tracking-tight">
-                  {incident.name}
-                </h1>
-                <span
-                  className={cn(
-                    "rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
-                    statusMeta.className,
-                  )}
-                >
-                  {statusMeta.label}
-                </span>
-              </div>
-              <p className="mt-0.5 flex items-center gap-1.5 text-sm text-muted-foreground">
-                <MapPin className="size-3.5" />
-                {incident.locationLabel} · {incident.county} · reported{" "}
-                {timeAgo(new Date(incident.reportedAt))}
-              </p>
+          <div>
+            <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+              <h1 className="text-2xl font-semibold tracking-tight">
+                {incident.name}
+              </h1>
+              <span className={cn("text-sm font-medium", statusMeta.text)}>
+                {statusMeta.label}
+              </span>
             </div>
+            <p className="mt-0.5 flex items-center gap-1.5 text-sm text-muted-foreground">
+              <MapPin className="size-3.5" />
+              {incident.locationLabel} · {incident.county} · reported{" "}
+              {timeAgo(new Date(incident.reportedAt))}
+            </p>
           </div>
           <div className="flex items-center gap-6 text-right">
             <div>
@@ -162,10 +145,7 @@ export default function IncidentDetail() {
               />
             </div>
 
-            <Panel
-              title="Incident summary"
-              icon={<Flame className="size-4 text-orange-400" />}
-            >
+            <Panel title="Incident summary">
               <p className="text-sm leading-6 text-foreground/90">
                 {incident.description}
               </p>

@@ -5,12 +5,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import {
-  CornerDownRight,
-  MessageSquare,
-  Send,
-  ShieldCheck,
-} from "lucide-react";
+import { CornerDownRight, Send, ShieldCheck } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { timeAgo } from "@/lib/format";
 import { Panel } from "@/components/dashboard/Panel";
@@ -115,9 +110,8 @@ export function IncidentLog({ incidentId }: IncidentLogProps) {
   return (
     <Panel
       title="Operations log"
-      icon={<MessageSquare className="size-4 text-sky-400" />}
       right={
-        <span className="text-[11px] text-muted-foreground">
+        <span className="text-xs text-muted-foreground">
           {updates ? `${updates.length} entries` : "…"}
         </span>
       }
