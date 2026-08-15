@@ -349,6 +349,10 @@ export function generateRouteToShelter(
   raw[raw.length - 1] = goal;
 
   const path = simplifyPath(raw);
+  // Simplification can drop the destination when the final leg is short —
+  // restore it so the route always ends exactly at the shelter.
+  const destination = raw[raw.length - 1];
+  if (path[path.length - 1] !== destination) path.push(destination);
   let distanceKm = 0;
   for (let i = 1; i < path.length; i++) {
     distanceKm += haversineKm(path[i - 1], path[i]);
