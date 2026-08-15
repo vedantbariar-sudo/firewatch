@@ -28,7 +28,7 @@ export const emailOtp = Email({
         {
           to: email,
           otp: token,
-          appName: process.env.VLY_APP_NAME || "a freebuff.com application",
+          appName: "FireWatch",
         },
         {
           headers: {
