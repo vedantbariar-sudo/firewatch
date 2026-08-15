@@ -13,6 +13,7 @@ import {
 } from "react-leaflet";
 import { cn } from "@/lib/utils";
 import { RISK_META, ROUTE_META } from "@/lib/status";
+import type { GeneratedRoute } from "@/lib/route";
 import type {
   FireIncident,
   RiskLevel,
@@ -79,6 +80,18 @@ function FitBounds({ incident }: { incident: FireIncident }) {
   return null;
 }
 
+/** Zoom to a generated guidance route once per destination (not per step scrub). */
+function FitRoute({ route }: { route: GeneratedRoute }) {
+  const map = useMap();
+  const fittedId = useRef<string | null>(null);
+  useEffect(() => {
+    if (fittedId.current === route.id) return;
+    fittedId.current = route.id;
+    map.fitBounds(L.latLngBounds(route.path), { padding: [50, 50] });
+  }, [map, route]);
+  return null;
+}
+
 function shelterIcon(status: ShelterStatus, selected = false) {
   const color =
     status === "open" ? "#34d399" : status === "at-capacity" ? "#fbbf24" : "#f87171";
@@ -96,6 +109,13 @@ const frontIcon = L.divIcon({
   html: `<span class="relative flex h-5 w-5"><span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-orange-500 opacity-60"></span><span class="relative inline-flex h-3.5 w-3.5 rounded-full border-2 border-white/90 bg-orange-500"></span></span>`,
   iconSize: [20, 20],
   iconAnchor: [10, 10],
+});
+
+const guidanceStartIcon = L.divIcon({
+  className: "fw-guidance-start",
+  html: `<span class="relative flex h-4 w-4"><span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-50"></span><span class="relative inline-flex h-3 w-3 rounded-full border-2 border-white/90 bg-emerald-400"></span></span>`,
+  iconSize: [16, 16],
+  iconAnchor: [8, 8],
 });
 
 export interface LayerState {
@@ -117,6 +137,8 @@ interface FireMapProps {
   stepIndex?: number;
   selectedRouteId?: string | null;
   selectedShelterId?: string | null;
+  /** Generated route to a chosen shelter; drawn when present. */
+  guidanceRoute?: GeneratedRoute | null;
   onSelectRoute?: (routeId: string | null) => void;
   onSelectShelter?: (shelterId: string | null) => void;
   onOpenIncident?: () => void;
@@ -133,6 +155,7 @@ export function FireMap({
   stepIndex = 0,
   selectedRouteId,
   selectedShelterId,
+  guidanceRoute,
   onSelectRoute,
   onSelectShelter,
   onOpenIncident,
@@ -296,6 +319,37 @@ export function FireMap({
             ))}
           </LayerGroup>
         )}
+
+        {/* Generated guidance route — drawn when a shelter is selected */}
+        {guidanceRoute && (
+          <LayerGroup>
+            <FitRoute route={guidanceRoute} />
+            <Polyline
+              positions={guidanceRoute.path}
+              pathOptions={{
+                color: "#10b981",
+                weight: 6,
+                opacity: 0.95,
+                lineCap: "round",
+                lineJoin: "round",
+              }}
+            >
+              <Tooltip sticky direction="top">
+                Your route — {guidanceRoute.distanceKm} km ·{" "}
+                {guidanceRoute.etaMin} min
+              </Tooltip>
+            </Polyline>
+            <Marker
+              position={guidanceRoute.path[0]}
+              icon={guidanceStartIcon}
+              interactive={false}
+            >
+              <Tooltip direction="top" offset={[0, -8]}>
+                Evacuation zone
+              </Tooltip>
+            </Marker>
+          </LayerGroup>
+        )}
       </MapContainer>
 
       {/* Forecast HUD chip */}
@@ -343,6 +397,12 @@ export function FireMap({
                 {ROUTE_META[status].label}
               </div>
             ))}
+          {guidanceRoute && (
+            <div className="flex items-center gap-2">
+              <span className="h-[3px] w-4 rounded-full bg-emerald-400" />
+              Your route
+            </div>
+          )}
           {visible.shelters && (
             <div className="flex items-center gap-2">
               <span className="h-2.5 w-2.5 rounded-full border-2 border-emerald-400" />

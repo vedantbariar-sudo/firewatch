@@ -1,4 +1,5 @@
 import { incidentApi } from "@/lib/api";
+import { generateRouteToShelter } from "@/lib/route";
 import type { FireIncident } from "@/types";
 import { ALL_LAYERS, FireMap } from "@/components/map/FireMap";
 import type { LayerState } from "@/components/map/FireMap";
@@ -12,7 +13,7 @@ import { GuideToShelter } from "@/components/dashboard/GuideToShelter";
 import { StatsStrip } from "@/components/dashboard/StatsStrip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { ArrowUpRight } from "lucide-react";
 import { Link } from "react-router";
@@ -32,6 +33,15 @@ export default function Dashboard() {
 
   const incident =
     incidents?.find((item) => item.id === selectedId) ?? null;
+
+  const selectedShelter =
+    incident?.shelters.find((item) => item.id === selectedShelterId) ?? null;
+
+  /** Generated route to the chosen shelter, re-run per forecast step. */
+  const guidanceRoute = useMemo(() => {
+    if (!incident || !selectedShelter) return null;
+    return generateRouteToShelter(incident, stepIndex, selectedShelter);
+  }, [incident, stepIndex, selectedShelter]);
 
   const handleSelectIncident = (id: string) => {
     setSelectedId(id);
@@ -141,6 +151,8 @@ export default function Dashboard() {
               stepIndex={stepIndex}
               layers={layers}
               selectedRouteId={selectedRouteId}
+              selectedShelterId={selectedShelterId}
+              guidanceRoute={guidanceRoute}
               onSelectRoute={setSelectedRouteId}
               onSelectShelter={setSelectedShelterId}
               onOpenIncident={() => navigate(`/incidents/${incident.id}`)}
@@ -157,13 +169,11 @@ export default function Dashboard() {
 
         <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
           <GuideToShelter
-            key={incident.id}
             incident={incident}
             stepIndex={stepIndex}
-            selectedRouteId={selectedRouteId}
             selectedShelterId={selectedShelterId}
-            onSelectRoute={setSelectedRouteId}
             onSelectShelter={setSelectedShelterId}
+            guidanceRoute={guidanceRoute}
           />
           <EvacuationPanel
             incident={incident}

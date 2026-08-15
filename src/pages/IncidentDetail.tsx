@@ -9,12 +9,13 @@ import { ALL_LAYERS, FireMap } from "@/components/map/FireMap";
 import type { LayerState } from "@/components/map/FireMap";
 import { Skeleton } from "@/components/ui/skeleton";
 import { incidentApi } from "@/lib/api";
+import { generateRouteToShelter } from "@/lib/route";
 import { INCIDENT_STATUS_META } from "@/lib/status";
 import { timeAgo } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { FireIncident } from "@/types";
 import { ChevronRight, Flame, MapPin } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router";
 
 export default function IncidentDetail() {
@@ -38,6 +39,19 @@ export default function IncidentDetail() {
     }
     incidentApi.getIncident(id).then((result) => setIncident(result));
   }, [id]);
+
+  const selectedShelter =
+    incident && typeof incident !== "string"
+      ? incident.shelters.find((item) => item.id === selectedShelterId) ?? null
+      : null;
+
+  /** Generated route to the chosen shelter, re-run per forecast step. */
+  const guidanceRoute = useMemo(() => {
+    if (!incident || typeof incident === "string" || !selectedShelter) {
+      return null;
+    }
+    return generateRouteToShelter(incident, stepIndex, selectedShelter);
+  }, [incident, stepIndex, selectedShelter]);
 
   if (incident === "loading") {
     return (
@@ -147,6 +161,7 @@ export default function IncidentDetail() {
                 layers={layers}
                 selectedRouteId={selectedRouteId}
                 selectedShelterId={selectedShelterId}
+                guidanceRoute={guidanceRoute}
                 onSelectRoute={setSelectedRouteId}
                 onSelectShelter={setSelectedShelterId}
                 className="h-[420px] lg:h-[500px]"
@@ -162,10 +177,9 @@ export default function IncidentDetail() {
             <GuideToShelter
               incident={incident}
               stepIndex={stepIndex}
-              selectedRouteId={selectedRouteId}
               selectedShelterId={selectedShelterId}
-              onSelectRoute={setSelectedRouteId}
               onSelectShelter={setSelectedShelterId}
+              guidanceRoute={guidanceRoute}
             />
           </div>
 
