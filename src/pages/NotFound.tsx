@@ -1,4 +1,6 @@
 import { motion } from "framer-motion";
+import { Link } from "react-router";
+import { Flame } from "lucide-react";
 
 export default function NotFound() {
   return (
@@ -6,20 +8,20 @@ export default function NotFound() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
-      className="min-h-screen flex flex-col"
+      className="min-h-screen flex flex-col bg-background text-foreground"
     >
-
-      
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col items-center justify-center">
-        <div className="max-w-5xl mx-auto relative px-4">
-          <div className="flex items-center justify-center min-h-[200px]">
-            <div className="text-center">
-              <h1 className="text-4xl font-bold text-gray-900 mb-4">404</h1>
-              <p className="text-lg text-gray-600">Page Not Found</p>
-            </div>
-          </div>
-        </div>
+      <div className="flex flex-1 flex-col items-center justify-center px-4">
+        <Flame className="size-8 text-orange-500" />
+        <h1 className="mt-5 text-5xl font-bold tracking-tight">404</h1>
+        <p className="mt-2 text-lg text-muted-foreground">
+          This page is outside the incident area.
+        </p>
+        <Link
+          to="/"
+          className="mt-7 inline-flex h-9 items-center rounded-md border border-border/70 bg-background/60 px-4 text-sm font-medium transition-colors hover:bg-accent"
+        >
+          Back to FireWatch
+        </Link>
       </div>
     </motion.div>
   );

@@ -32,12 +32,18 @@ const schema = defineSchema(
       role: v.optional(roleValidator), // role of the user. do not remove
     }).index("email", ["email"]), // index for the email. do not remove or modify
 
-    // add other tables here
-
-    // tableName: defineTable({
-    //   ...
-    //   // table fields
-    // }).index("by_field", ["field"])
+    // Team log: updates and comments posted by operators against a mock
+    // incident id (e.g. "ridge-fire"). `parentId` links a comment to its
+    // parent update, so the frontend can render flat threads.
+    incidentUpdates: defineTable({
+      incidentId: v.string(),
+      body: v.string(),
+      parentId: v.optional(v.id("incidentUpdates")),
+      authorId: v.optional(v.id("users")),
+      authorName: v.optional(v.string()),
+      kind: v.union(v.literal("system"), v.literal("team")),
+      createdAt: v.number(),
+    }).index("by_incident", ["incidentId"]),
   },
   {
     schemaValidation: false,
