@@ -1,10 +1,13 @@
 /**
  * FireWatch domain types.
  *
- * These mirror the shape the prediction backend will eventually serve over its
- * API. The frontend currently reads from `src/data/mock.ts` through the service
- * layer in `src/lib/api.ts` — swapping that layer to `fetch()` calls is the
- * only change needed when the real backend goes live.
+ * `FireIncident` is the shape the frontend consumes — it mirrors what the
+ * prediction backend will eventually serve over its API. Until then, the
+ * service layer in `src/lib/api.ts` builds it from the raw `FireScenario`
+ * records in `src/data/mock.ts` by running the spread simulation in
+ * `src/lib/spread.ts` (weather, risk zones, route statuses). Swapping the
+ * service layer to `fetch()` calls against the real backend is the only change
+ * needed when it goes live.
  */
 
 /** Geographic point as [latitude, longitude]. */
@@ -15,6 +18,9 @@ export type IncidentStatus = "active" | "contained" | "watch";
 export type RiskLevel = "low" | "moderate" | "high" | "extreme" | "catastrophic";
 
 export type RouteStatus = "open" | "recommended" | "caution" | "closed";
+
+/** How the wind is expected to trend over the forecast window. */
+export type WindTrend = "strengthening" | "steady" | "weakening";
 
 export type ShelterStatus = "open" | "at-capacity" | "closing";
 
@@ -46,10 +52,14 @@ export interface EvacuationRoute {
   path: LatLng[];
   distanceKm: number;
   etaMin: number;
-  /** Route status at each forecast step (index-aligned with `forecast`). */
-  statusByStep: RouteStatus[];
   note?: string;
 }
+
+/** A route with its per-step status, filled in by the spread simulation. */
+export type EvacuationRouteWithStatus = EvacuationRoute & {
+  /** Route status at each forecast step (index-aligned with `forecast`). */
+  statusByStep: RouteStatus[];
+};
 
 export interface Shelter {
   id: string;
@@ -109,8 +119,28 @@ export interface FireIncident {
   /** Point where the fire front is most active (for the pulsing marker). */
   fireFront: LatLng;
   forecast: ForecastStep[];
-  routes: EvacuationRoute[];
+  routes: EvacuationRouteWithStatus[];
   shelters: Shelter[];
   stats: FireStats;
   alerts: Alert[];
+}
+
+/**
+ * Raw incident record as authored in `src/data/mock.ts`.
+ *
+ * Holds the fire's current state plus the parameters the spread simulation
+ * (`src/lib/spread.ts`) needs. `forecast` and per-route statuses are derived
+ * from these, so the demo's predictions are produced by the model rather than
+ * hand-written.
+ */
+export interface FireScenario extends Omit<FireIncident, "forecast" | "routes"> {
+  /** Current conditions at the fire front (overridden by live data when available). */
+  weather: Weather;
+  /** How the wind is expected to trend over the forecast window. */
+  windTrend: WindTrend;
+  /** Baseline spread rate (km/h) before wind/humidity adjustments. */
+  spreadBaseKmh: number;
+  /** Forecast offsets in hours from now; defaults to [0, 6, 12, 24]. */
+  forecastHours?: number[];
+  routes: EvacuationRoute[];
 }

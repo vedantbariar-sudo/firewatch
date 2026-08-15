@@ -1,11 +1,14 @@
-import type { FireIncident } from "@/types";
+import type { FireScenario } from "@/types";
 
 /**
- * Mock data for the FireWatch demo.
+ * Mock scenario data for the FireWatch demo.
  *
- * Everything in this file is simulated: coordinates are approximate, numbers
- * are illustrative, and the "model" is a hand-authored forecast. The real
- * prediction backend will replace this via `src/lib/api.ts`.
+ * Each record is the fire's *current state* plus the parameters the spread
+ * simulation (`src/lib/spread.ts`) needs. The forecast steps, risk zones, and
+ * per-route statuses are derived by the model from these inputs — nothing here
+ * is hand-authored prediction. Coordinates are approximate and numbers are
+ * illustrative; the real prediction backend will replace this via
+ * `src/lib/api.ts`.
  */
 
 const ridgePerimeter: [number, number][] = [
@@ -21,7 +24,7 @@ const ridgePerimeter: [number, number][] = [
   [34.24, -117.21],
 ];
 
-export const mockIncidents: FireIncident[] = [
+export const mockScenarios: FireScenario[] = [
   {
     id: "ridge-fire",
     name: "Ridge Fire",
@@ -31,263 +34,19 @@ export const mockIncidents: FireIncident[] = [
     locationLabel: "Lake Arrowhead, CA",
     reportedAt: "2026-08-14T09:40:00Z",
     description:
-      "The Ridge Fire ignited along the southwest shore of Lake Arrowhead and has grown rapidly under northeast Santa Ana winds. The eastern flank is the primary concern: Cedar Glen and Blue Jay are under mandatory evacuation, and the SR-18 corridor is at risk of closure. Structure defense is anchored along the lake shore; the model projects the burn to push northeast toward Running Springs.",
+      "The Ridge Fire ignited along the southwest shore of Lake Arrowhead and has grown rapidly under dry, gusty winds. The eastern flank is the primary concern: Cedar Glen and Blue Jay are under mandatory evacuation, and the SR-18 corridor is at risk of closure. Structure defense is anchored along the lake shore; the model projects the burn to push northeast toward Running Springs.",
     perimeter: ridgePerimeter,
     fireFront: [34.256, -117.178],
-    forecast: [
-      {
-        label: "Now",
-        hoursFromNow: 0,
-        riskLevel: "extreme",
-        riskNote:
-          "Front advancing toward Cedar Glen along the SR-18 corridor. Mandatory evacuation in effect for Cedar Glen and Blue Jay.",
-        spreadKmh: 1.8,
-        weather: {
-          tempC: 33,
-          humidityPct: 11,
-          windSpeedKmh: 28,
-          windGustKmh: 42,
-          windDirectionDeg: 70,
-          conditions: "Dry; smoke plume drifting northeast",
-        },
-        riskZones: [
-          {
-            id: "ridge-z0-extreme",
-            level: "extreme",
-            polygon: ridgePerimeter,
-            label: "Active burn",
-          },
-          {
-            id: "ridge-z0-high",
-            level: "high",
-            polygon: [
-              [34.252, -117.216],
-              [34.264, -117.198],
-              [34.266, -117.17],
-              [34.255, -117.152],
-              [34.238, -117.148],
-              [34.22, -117.158],
-              [34.21, -117.174],
-              [34.212, -117.196],
-              [34.224, -117.214],
-            ],
-          },
-          {
-            id: "ridge-z0-moderate",
-            level: "moderate",
-            polygon: [
-              [34.256, -117.224],
-              [34.272, -117.2],
-              [34.272, -117.164],
-              [34.256, -117.142],
-              [34.232, -117.138],
-              [34.212, -117.152],
-              [34.202, -117.172],
-              [34.204, -117.202],
-              [34.222, -117.226],
-            ],
-          },
-        ],
-      },
-      {
-        label: "In 6 hours",
-        hoursFromNow: 6,
-        riskLevel: "extreme",
-        riskNote:
-          "Cedar Glen flank active; SR-18 westbound sections under spot-fire watch. Winds strengthening out of the northeast.",
-        spreadKmh: 2.3,
-        weather: {
-          tempC: 34,
-          humidityPct: 9,
-          windSpeedKmh: 32,
-          windGustKmh: 48,
-          windDirectionDeg: 75,
-          conditions: "Santa Ana conditions strengthening",
-        },
-        riskZones: [
-          {
-            id: "ridge-z1-extreme",
-            level: "extreme",
-            polygon: [
-              [34.25, -117.208],
-              [34.26, -117.194],
-              [34.264, -117.172],
-              [34.256, -117.16],
-              [34.242, -117.158],
-              [34.228, -117.166],
-              [34.22, -117.18],
-              [34.222, -117.2],
-              [34.234, -117.21],
-            ],
-            label: "Active burn",
-          },
-          {
-            id: "ridge-z1-high",
-            level: "high",
-            polygon: [
-              [34.258, -117.218],
-              [34.274, -117.198],
-              [34.28, -117.17],
-              [34.27, -117.148],
-              [34.252, -117.142],
-              [34.232, -117.15],
-              [34.216, -117.164],
-              [34.214, -117.188],
-              [34.226, -117.214],
-              [34.244, -117.222],
-            ],
-          },
-          {
-            id: "ridge-z1-moderate",
-            level: "moderate",
-            polygon: [
-              [34.262, -117.23],
-              [34.282, -117.202],
-              [34.286, -117.166],
-              [34.272, -117.138],
-              [34.248, -117.132],
-              [34.224, -117.144],
-              [34.208, -117.162],
-              [34.206, -117.192],
-              [34.218, -117.222],
-              [34.24, -117.234],
-            ],
-          },
-        ],
-      },
-      {
-        label: "In 12 hours",
-        hoursFromNow: 12,
-        riskLevel: "catastrophic",
-        riskNote:
-          "SR-18 east corridor compromised; the model recommends SR-173 North for remaining Lake Arrowhead communities.",
-        spreadKmh: 3.1,
-        weather: {
-          tempC: 36,
-          humidityPct: 8,
-          windSpeedKmh: 38,
-          windGustKmh: 55,
-          windDirectionDeg: 80,
-          conditions: "Santa Ana peak approaching",
-        },
-        riskZones: [
-          {
-            id: "ridge-z2-extreme",
-            level: "extreme",
-            polygon: [
-              [34.256, -117.212],
-              [34.268, -117.196],
-              [34.274, -117.174],
-              [34.266, -117.156],
-              [34.25, -117.15],
-              [34.234, -117.158],
-              [34.224, -117.172],
-              [34.226, -117.196],
-              [34.24, -117.21],
-            ],
-            label: "Active burn",
-          },
-          {
-            id: "ridge-z2-high",
-            level: "high",
-            polygon: [
-              [34.264, -117.224],
-              [34.282, -117.202],
-              [34.288, -117.17],
-              [34.278, -117.142],
-              [34.256, -117.134],
-              [34.234, -117.142],
-              [34.218, -117.158],
-              [34.216, -117.184],
-              [34.23, -117.214],
-              [34.25, -117.226],
-            ],
-          },
-          {
-            id: "ridge-z2-moderate",
-            level: "moderate",
-            polygon: [
-              [34.27, -117.236],
-              [34.292, -117.206],
-              [34.296, -117.166],
-              [34.282, -117.134],
-              [34.254, -117.126],
-              [34.228, -117.138],
-              [34.21, -117.156],
-              [34.208, -117.188],
-              [34.222, -117.222],
-              [34.248, -117.24],
-            ],
-          },
-        ],
-      },
-      {
-        label: "In 24 hours",
-        hoursFromNow: 24,
-        riskLevel: "catastrophic",
-        riskNote:
-          "East flank approaching Running Springs; SR-18 East closed. All evacuation movement on SR-173 North.",
-        spreadKmh: 3.8,
-        weather: {
-          tempC: 38,
-          humidityPct: 7,
-          windSpeedKmh: 44,
-          windGustKmh: 65,
-          windDirectionDeg: 85,
-          conditions: "Peak Santa Ana; extreme fire behavior",
-        },
-        riskZones: [
-          {
-            id: "ridge-z3-extreme",
-            level: "extreme",
-            polygon: [
-              [34.262, -117.216],
-              [34.276, -117.198],
-              [34.282, -117.174],
-              [34.272, -117.152],
-              [34.254, -117.144],
-              [34.236, -117.154],
-              [34.226, -117.17],
-              [34.228, -117.196],
-              [34.244, -117.214],
-            ],
-            label: "Active burn",
-          },
-          {
-            id: "ridge-z3-high",
-            level: "high",
-            polygon: [
-              [34.27, -117.23],
-              [34.29, -117.204],
-              [34.296, -117.168],
-              [34.286, -117.136],
-              [34.26, -117.128],
-              [34.236, -117.138],
-              [34.218, -117.154],
-              [34.214, -117.182],
-              [34.232, -117.22],
-              [34.254, -117.234],
-            ],
-          },
-          {
-            id: "ridge-z3-moderate",
-            level: "moderate",
-            polygon: [
-              [34.278, -117.242],
-              [34.302, -117.21],
-              [34.308, -117.166],
-              [34.292, -117.128],
-              [34.26, -117.12],
-              [34.23, -117.132],
-              [34.21, -117.152],
-              [34.206, -117.186],
-              [34.224, -117.228],
-              [34.254, -117.246],
-            ],
-          },
-        ],
-      },
-    ],
+    weather: {
+      tempC: 33,
+      humidityPct: 11,
+      windSpeedKmh: 28,
+      windGustKmh: 42,
+      windDirectionDeg: 250,
+      conditions: "Dry; smoke plume drifting northeast",
+    },
+    windTrend: "strengthening",
+    spreadBaseKmh: 1.5,
     routes: [
       {
         id: "ridge-r1",
@@ -304,7 +63,6 @@ export const mockIncidents: FireIncident[] = [
         ],
         distanceKm: 14.2,
         etaMin: 18,
-        statusByStep: ["recommended", "recommended", "caution", "closed"],
         note: "Escorted traffic during daylight; spot fires possible east of Cedar Glen.",
       },
       {
@@ -322,7 +80,6 @@ export const mockIncidents: FireIncident[] = [
         ],
         distanceKm: 21.5,
         etaMin: 26,
-        statusByStep: ["open", "open", "recommended", "recommended"],
         note: "Two lanes open; escorts staged at the summit.",
       },
       {
@@ -338,7 +95,6 @@ export const mockIncidents: FireIncident[] = [
         ],
         distanceKm: 9.8,
         etaMin: 14,
-        statusByStep: ["caution", "caution", "caution", "caution"],
         note: "Single-lane traffic; smoke impacts near Crest Park.",
       },
     ],
@@ -405,9 +161,9 @@ export const mockIncidents: FireIncident[] = [
       {
         id: "ridge-a3",
         severity: "warning",
-        title: "Santa Ana wind event, T+18h",
+        title: "Gusty wind event, T+18h",
         detail:
-          "Northeast winds of 40–65 km/h with humidity below 10%. Critical fire weather expected.",
+          "Winds of 40–65 km/h with humidity below 10% expected. Critical fire weather conditions.",
         source: "NWS",
         ageMin: 55,
       },
@@ -430,7 +186,7 @@ export const mockIncidents: FireIncident[] = [
     locationLabel: "Idyllwild, CA",
     reportedAt: "2026-08-13T22:15:00Z",
     description:
-      "The Pinnacle Fire is burning in chaparral east of Idyllwild. Westerly winds have kept the burn south of town; a north wind shift predicted for tomorrow morning could push the fire toward Pine Cove. Containment lines along the west flank are holding.",
+      "The Pinnacle Fire is burning in chaparral east of Idyllwild. A wind shift predicted for tomorrow morning could push the fire toward Pine Cove. Containment lines along the west flank are holding.",
     perimeter: [
       [33.736, -116.742],
       [33.748, -116.734],
@@ -442,252 +198,16 @@ export const mockIncidents: FireIncident[] = [
       [33.724, -116.734],
     ],
     fireFront: [33.756, -116.718],
-    forecast: [
-      {
-        label: "Now",
-        hoursFromNow: 0,
-        riskLevel: "high",
-        riskNote:
-          "West flank holding on constructed line; east flank burning in steep, inaccessible terrain.",
-        spreadKmh: 0.9,
-        weather: {
-          tempC: 29,
-          humidityPct: 18,
-          windSpeedKmh: 14,
-          windGustKmh: 22,
-          windDirectionDeg: 320,
-          conditions: "Dry mountain conditions",
-        },
-        riskZones: [
-          {
-            id: "pin-z0-extreme",
-            level: "extreme",
-            polygon: [
-              [33.736, -116.742],
-              [33.748, -116.734],
-              [33.756, -116.718],
-              [33.752, -116.7],
-              [33.738, -116.694],
-              [33.726, -116.702],
-              [33.72, -116.716],
-              [33.724, -116.734],
-            ],
-            label: "Active burn",
-          },
-          {
-            id: "pin-z0-high",
-            level: "high",
-            polygon: [
-              [33.74, -116.752],
-              [33.756, -116.742],
-              [33.766, -116.72],
-              [33.762, -116.696],
-              [33.744, -116.688],
-              [33.726, -116.696],
-              [33.716, -116.714],
-              [33.72, -116.74],
-            ],
-          },
-          {
-            id: "pin-z0-moderate",
-            level: "moderate",
-            polygon: [
-              [33.744, -116.762],
-              [33.764, -116.75],
-              [33.776, -116.722],
-              [33.772, -116.692],
-              [33.75, -116.682],
-              [33.728, -116.69],
-              [33.712, -116.712],
-              [33.716, -116.746],
-            ],
-          },
-        ],
-      },
-      {
-        label: "In 6 hours",
-        hoursFromNow: 6,
-        riskLevel: "high",
-        riskNote:
-          "Wind beginning to shift north. Pine Cove is pre-evacuation; monitor SR-243 north of town.",
-        spreadKmh: 1.2,
-        weather: {
-          tempC: 30,
-          humidityPct: 16,
-          windSpeedKmh: 16,
-          windGustKmh: 26,
-          windDirectionDeg: 340,
-          conditions: "Wind shifting north",
-        },
-        riskZones: [
-          {
-            id: "pin-z1-extreme",
-            level: "extreme",
-            polygon: [
-              [33.738, -116.744],
-              [33.752, -116.736],
-              [33.762, -116.72],
-              [33.758, -116.7],
-              [33.742, -116.692],
-              [33.728, -116.7],
-              [33.72, -116.716],
-              [33.724, -116.738],
-            ],
-            label: "Active burn",
-          },
-          {
-            id: "pin-z1-high",
-            level: "high",
-            polygon: [
-              [33.742, -116.754],
-              [33.76, -116.744],
-              [33.772, -116.72],
-              [33.768, -116.694],
-              [33.748, -116.686],
-              [33.728, -116.694],
-              [33.714, -116.714],
-              [33.718, -116.744],
-            ],
-          },
-          {
-            id: "pin-z1-moderate",
-            level: "moderate",
-            polygon: [
-              [33.746, -116.764],
-              [33.768, -116.752],
-              [33.782, -116.722],
-              [33.778, -116.69],
-              [33.754, -116.68],
-              [33.73, -116.688],
-              [33.71, -116.712],
-              [33.714, -116.75],
-            ],
-          },
-        ],
-      },
-      {
-        label: "In 12 hours",
-        hoursFromNow: 12,
-        riskLevel: "extreme",
-        riskNote:
-          "North wind established. Pine Cove under evacuation warning; SR-243 North to Banning remains open but smoky.",
-        spreadKmh: 1.6,
-        weather: {
-          tempC: 31,
-          humidityPct: 14,
-          windSpeedKmh: 20,
-          windGustKmh: 32,
-          windDirectionDeg: 360,
-          conditions: "North wind established",
-        },
-        riskZones: [
-          {
-            id: "pin-z2-extreme",
-            level: "extreme",
-            polygon: [
-              [33.74, -116.746],
-              [33.756, -116.738],
-              [33.768, -116.722],
-              [33.764, -116.702],
-              [33.748, -116.694],
-              [33.732, -116.702],
-              [33.722, -116.718],
-              [33.726, -116.74],
-            ],
-            label: "Active burn",
-          },
-          {
-            id: "pin-z2-high",
-            level: "high",
-            polygon: [
-              [33.744, -116.756],
-              [33.764, -116.746],
-              [33.778, -116.722],
-              [33.774, -116.696],
-              [33.752, -116.688],
-              [33.73, -116.696],
-              [33.716, -116.716],
-              [33.72, -116.746],
-            ],
-          },
-          {
-            id: "pin-z2-moderate",
-            level: "moderate",
-            polygon: [
-              [33.748, -116.766],
-              [33.772, -116.754],
-              [33.788, -116.724],
-              [33.784, -116.692],
-              [33.758, -116.682],
-              [33.732, -116.69],
-              [33.712, -116.714],
-              [33.716, -116.752],
-            ],
-          },
-        ],
-      },
-      {
-        label: "In 24 hours",
-        hoursFromNow: 24,
-        riskLevel: "extreme",
-        riskNote:
-          "Fire north of Pine Cove along SR-243; SR-243 North downgraded to caution. SR-74 East to Palm Desert is the recommended route.",
-        spreadKmh: 2.0,
-        weather: {
-          tempC: 32,
-          humidityPct: 12,
-          windSpeedKmh: 24,
-          windGustKmh: 38,
-          windDirectionDeg: 20,
-          conditions: "Dry north winds",
-        },
-        riskZones: [
-          {
-            id: "pin-z3-extreme",
-            level: "extreme",
-            polygon: [
-              [33.742, -116.748],
-              [33.76, -116.74],
-              [33.774, -116.724],
-              [33.77, -116.704],
-              [33.752, -116.696],
-              [33.734, -116.704],
-              [33.724, -116.72],
-              [33.728, -116.742],
-            ],
-            label: "Active burn",
-          },
-          {
-            id: "pin-z3-high",
-            level: "high",
-            polygon: [
-              [33.746, -116.758],
-              [33.768, -116.748],
-              [33.784, -116.724],
-              [33.78, -116.698],
-              [33.756, -116.69],
-              [33.732, -116.698],
-              [33.718, -116.718],
-              [33.722, -116.748],
-            ],
-          },
-          {
-            id: "pin-z3-moderate",
-            level: "moderate",
-            polygon: [
-              [33.75, -116.768],
-              [33.776, -116.756],
-              [33.794, -116.726],
-              [33.79, -116.694],
-              [33.762, -116.684],
-              [33.734, -116.692],
-              [33.714, -116.716],
-              [33.718, -116.754],
-            ],
-          },
-        ],
-      },
-    ],
+    weather: {
+      tempC: 29,
+      humidityPct: 18,
+      windSpeedKmh: 14,
+      windGustKmh: 22,
+      windDirectionDeg: 170,
+      conditions: "Dry mountain conditions",
+    },
+    windTrend: "strengthening",
+    spreadBaseKmh: 0.9,
     routes: [
       {
         id: "pin-r1",
@@ -702,7 +222,6 @@ export const mockIncidents: FireIncident[] = [
         ],
         distanceKm: 18.6,
         etaMin: 22,
-        statusByStep: ["recommended", "recommended", "recommended", "caution"],
         note: "Smoke may reduce visibility north of Pine Cove.",
       },
       {
@@ -720,7 +239,6 @@ export const mockIncidents: FireIncident[] = [
         ],
         distanceKm: 42.0,
         etaMin: 38,
-        statusByStep: ["open", "open", "open", "recommended"],
       },
       {
         id: "pin-r3",
@@ -734,7 +252,6 @@ export const mockIncidents: FireIncident[] = [
         ],
         distanceKm: 26.4,
         etaMin: 30,
-        statusByStep: ["open", "open", "open", "open"],
       },
     ],
     shelters: [
@@ -806,206 +323,16 @@ export const mockIncidents: FireIncident[] = [
       [32.83, -116.774],
     ],
     fireFront: [32.844, -116.754],
-    forecast: [
-      {
-        label: "Now",
-        hoursFromNow: 0,
-        riskLevel: "moderate",
-        riskNote: "No forward progress. Crews working hotspots along the north line.",
-        spreadKmh: 0.2,
-        weather: {
-          tempC: 27,
-          humidityPct: 22,
-          windSpeedKmh: 9,
-          windGustKmh: 14,
-          windDirectionDeg: 260,
-          conditions: "Clear",
-        },
-        riskZones: [
-          {
-            id: "mesa-z0-high",
-            level: "high",
-            polygon: [
-              [32.838, -116.786],
-              [32.848, -116.778],
-              [32.852, -116.764],
-              [32.844, -116.754],
-              [32.834, -116.76],
-              [32.83, -116.774],
-            ],
-            label: "Active burn",
-          },
-          {
-            id: "mesa-z0-moderate",
-            level: "moderate",
-            polygon: [
-              [32.834, -116.796],
-              [32.85, -116.788],
-              [32.858, -116.766],
-              [32.852, -116.75],
-              [32.836, -116.754],
-              [32.824, -116.764],
-              [32.822, -116.782],
-            ],
-          },
-          {
-            id: "mesa-z0-low",
-            level: "low",
-            polygon: [
-              [32.83, -116.806],
-              [32.852, -116.798],
-              [32.864, -116.768],
-              [32.856, -116.744],
-              [32.832, -116.748],
-              [32.818, -116.762],
-              [32.816, -116.79],
-            ],
-          },
-        ],
-      },
-      {
-        label: "In 6 hours",
-        hoursFromNow: 6,
-        riskLevel: "moderate",
-        riskNote: "No predicted spread. Hotspot grid complete along Old Highway 80.",
-        spreadKmh: 0.2,
-        weather: {
-          tempC: 28,
-          humidityPct: 20,
-          windSpeedKmh: 10,
-          windGustKmh: 16,
-          windDirectionDeg: 250,
-          conditions: "Clear",
-        },
-        riskZones: [
-          {
-            id: "mesa-z1-high",
-            level: "high",
-            polygon: [
-              [32.838, -116.786],
-              [32.848, -116.778],
-              [32.852, -116.764],
-              [32.844, -116.754],
-              [32.834, -116.76],
-              [32.83, -116.774],
-            ],
-            label: "Active burn",
-          },
-          {
-            id: "mesa-z1-moderate",
-            level: "moderate",
-            polygon: [
-              [32.834, -116.796],
-              [32.85, -116.788],
-              [32.858, -116.766],
-              [32.852, -116.75],
-              [32.836, -116.754],
-              [32.824, -116.764],
-              [32.822, -116.782],
-            ],
-          },
-          {
-            id: "mesa-z1-low",
-            level: "low",
-            polygon: [
-              [32.83, -116.806],
-              [32.852, -116.798],
-              [32.864, -116.768],
-              [32.856, -116.744],
-              [32.832, -116.748],
-              [32.818, -116.762],
-              [32.816, -116.79],
-            ],
-          },
-        ],
-      },
-      {
-        label: "In 12 hours",
-        hoursFromNow: 12,
-        riskLevel: "low",
-        riskNote: "Cooling overnight. Risk downgraded; advisory may lift by morning.",
-        spreadKmh: 0.1,
-        weather: {
-          tempC: 24,
-          humidityPct: 26,
-          windSpeedKmh: 8,
-          windGustKmh: 12,
-          windDirectionDeg: 240,
-          conditions: "Partly cloudy, cooling",
-        },
-        riskZones: [
-          {
-            id: "mesa-z2-moderate",
-            level: "moderate",
-            polygon: [
-              [32.838, -116.786],
-              [32.848, -116.778],
-              [32.852, -116.764],
-              [32.844, -116.754],
-              [32.834, -116.76],
-              [32.83, -116.774],
-            ],
-            label: "Active burn",
-          },
-          {
-            id: "mesa-z2-low",
-            level: "low",
-            polygon: [
-              [32.834, -116.796],
-              [32.85, -116.788],
-              [32.858, -116.766],
-              [32.852, -116.75],
-              [32.836, -116.754],
-              [32.824, -116.764],
-              [32.822, -116.782],
-            ],
-          },
-        ],
-      },
-      {
-        label: "In 24 hours",
-        hoursFromNow: 24,
-        riskLevel: "low",
-        riskNote: "No modeled spread. Demob planning in progress.",
-        spreadKmh: 0.1,
-        weather: {
-          tempC: 26,
-          humidityPct: 24,
-          windSpeedKmh: 7,
-          windGustKmh: 10,
-          windDirectionDeg: 250,
-          conditions: "Clear",
-        },
-        riskZones: [
-          {
-            id: "mesa-z3-moderate",
-            level: "moderate",
-            polygon: [
-              [32.838, -116.786],
-              [32.848, -116.778],
-              [32.852, -116.764],
-              [32.844, -116.754],
-              [32.834, -116.76],
-              [32.83, -116.774],
-            ],
-            label: "Active burn",
-          },
-          {
-            id: "mesa-z3-low",
-            level: "low",
-            polygon: [
-              [32.834, -116.796],
-              [32.85, -116.788],
-              [32.858, -116.766],
-              [32.852, -116.75],
-              [32.836, -116.754],
-              [32.824, -116.764],
-              [32.822, -116.782],
-            ],
-          },
-        ],
-      },
-    ],
+    weather: {
+      tempC: 27,
+      humidityPct: 22,
+      windSpeedKmh: 9,
+      windGustKmh: 14,
+      windDirectionDeg: 260,
+      conditions: "Clear",
+    },
+    windTrend: "weakening",
+    spreadBaseKmh: 0.25,
     routes: [
       {
         id: "mesa-r1",
@@ -1019,7 +346,6 @@ export const mockIncidents: FireIncident[] = [
         ],
         distanceKm: 6.4,
         etaMin: 10,
-        statusByStep: ["open", "open", "open", "open"],
       },
       {
         id: "mesa-r2",
@@ -1033,7 +359,6 @@ export const mockIncidents: FireIncident[] = [
         ],
         distanceKm: 8.1,
         etaMin: 12,
-        statusByStep: ["open", "open", "open", "open"],
       },
     ],
     shelters: [
