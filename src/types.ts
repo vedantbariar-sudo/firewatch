@@ -26,6 +26,23 @@ export type ShelterStatus = "open" | "at-capacity" | "closing";
 
 export type AlertSeverity = "critical" | "warning" | "advisory";
 
+/** Where an incident's hotspot layer came from. */
+export type HotspotSource = "live" | "mock";
+
+/** A single satellite fire detection (NASA FIRMS VIIRS / MODIS). */
+export interface Hotspot {
+  id: string;
+  lat: number;
+  lng: number;
+  /** Fire Radiative Power in megawatts — an intensity proxy. */
+  frp: number;
+  confidence: "high" | "nominal" | "low";
+  /** Detection time, e.g. "2026-08-15 14:25 UTC". */
+  acquiredAt: string;
+  /** Sensor, e.g. "VIIRS-NPP". */
+  satellite: string;
+}
+
 export interface RiskZone {
   id: string;
   level: RiskLevel;
@@ -123,6 +140,9 @@ export interface FireIncident {
   shelters: Shelter[];
   stats: FireStats;
   alerts: Alert[];
+  /** Active-fire detections from the satellite feed (live or simulated). */
+  hotspots: Hotspot[];
+  hotspotSource: HotspotSource;
 }
 
 /**
@@ -133,7 +153,8 @@ export interface FireIncident {
  * from these, so the demo's predictions are produced by the model rather than
  * hand-written.
  */
-export interface FireScenario extends Omit<FireIncident, "forecast" | "routes"> {
+export interface FireScenario
+  extends Omit<FireIncident, "forecast" | "routes" | "hotspots" | "hotspotSource"> {
   /** Current conditions at the fire front (overridden by live data when available). */
   weather: Weather;
   /** How the wind is expected to trend over the forecast window. */

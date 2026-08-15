@@ -31,6 +31,8 @@ function incidents(): FireIncident[] {
         ...route,
         statusByStep: statuses[i],
       })),
+      hotspots: [],
+      hotspotSource: "mock" as const,
     };
   });
 }

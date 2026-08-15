@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import {
+  CircleMarker,
   LayerGroup,
   MapContainer,
   Marker,
@@ -16,6 +17,7 @@ import { RISK_META, ROUTE_META } from "@/lib/status";
 import type { GeneratedRoute } from "@/lib/route";
 import type {
   FireIncident,
+  Hotspot,
   RiskLevel,
   Shelter,
   ShelterStatus,
@@ -42,6 +44,13 @@ const RISK_ORDER: RiskLevel[] = [
   "extreme",
   "catastrophic",
 ];
+
+/** Hotspot marker fill by detection confidence (NASA FIRMS VIIRS). */
+const HOTSPOT_COLORS: Record<Hotspot["confidence"], string> = {
+  high: "#f97316",
+  nominal: "#fbbf24",
+  low: "#f87171",
+};
 
 function Tiles() {
   const [url, setUrl] = useState(CARTO_DARK);
@@ -123,6 +132,7 @@ export interface LayerState {
   risk: boolean;
   routes: boolean;
   shelters: boolean;
+  hotspots: boolean;
 }
 
 export const ALL_LAYERS: LayerState = {
@@ -130,6 +140,7 @@ export const ALL_LAYERS: LayerState = {
   risk: true,
   routes: true,
   shelters: true,
+  hotspots: true,
 };
 
 interface FireMapProps {
@@ -320,6 +331,30 @@ export function FireMap({
           </LayerGroup>
         )}
 
+        {/* Satellite hotspots — live VIIRS detections, or simulated */}
+        {visible.hotspots && incident.hotspots.length > 0 && (
+          <LayerGroup>
+            {incident.hotspots.slice(0, 150).map((hotspot) => (
+              <CircleMarker
+                key={hotspot.id}
+                center={[hotspot.lat, hotspot.lng]}
+                radius={Math.min(9, Math.max(3, 2.5 + hotspot.frp / 6))}
+                pathOptions={{
+                  color: "#fde68a",
+                  weight: 1,
+                  fillColor: HOTSPOT_COLORS[hotspot.confidence],
+                  fillOpacity: 0.8,
+                }}
+              >
+                <Tooltip sticky>
+                  FRP {hotspot.frp} MW · {hotspot.satellite} ·{" "}
+                  {hotspot.acquiredAt}
+                </Tooltip>
+              </CircleMarker>
+            ))}
+          </LayerGroup>
+        )}
+
         {/* Generated guidance route — drawn when a shelter is selected */}
         {guidanceRoute && (
           <LayerGroup>
@@ -351,6 +386,21 @@ export function FireMap({
           </LayerGroup>
         )}
       </MapContainer>
+
+      {/* Satellite source chip */}
+      {incident.hotspots.length > 0 && (
+        <div className="pointer-events-none absolute right-3 top-3 z-[800] flex items-center gap-2 rounded-md border border-border/60 bg-[#0a0f16]/85 px-3 py-2 text-sm text-foreground/90 backdrop-blur">
+          <span
+            className="h-2 w-2 rounded-full"
+            style={{
+              background: incident.hotspotSource === "live" ? "#34d399" : "#fbbf24",
+            }}
+          />
+          {incident.hotspotSource === "live"
+            ? "VIIRS hotspots · live"
+            : "VIIRS hotspots · simulated"}
+        </div>
+      )}
 
       {/* Forecast HUD chip */}
       <div className="pointer-events-none absolute left-3 top-3 z-[800] rounded-md border border-border/60 bg-[#0a0f16]/85 px-3 py-2 text-sm text-foreground/90 backdrop-blur">
@@ -407,6 +457,12 @@ export function FireMap({
             <div className="flex items-center gap-2">
               <span className="h-2.5 w-2.5 rounded-full border-2 border-emerald-400" />
               Shelter
+            </div>
+          )}
+          {visible.hotspots && incident.hotspots.length > 0 && (
+            <div className="flex items-center gap-2">
+              <span className="h-2.5 w-2.5 rounded-full bg-orange-500" />
+              Satellite hotspots
             </div>
           )}
         </div>
