@@ -1,19 +1,21 @@
 import type { Hotspot, HotspotSource, LatLng } from "@/types";
 
 /**
- * Satellite fire detections for the map.
+ * Live fire detections for the map.
  *
- * The live feed comes from NASA FIRMS (VIIRS 375 m near-real-time), fetched
- * server-side by the Convex action in `src/convex/hotspots.ts` — FIRMS does not
- * send CORS headers, so a browser call would always be blocked, and routing it
- * through Convex keeps the MAP_KEY server-side. This module holds the pure
- * pieces: payload parsing, deduping, bounding boxes, and the deterministic
- * simulated fallback used whenever live data isn't available, so the map never
- * looks broken mid-demo. `src/lib/api.ts` decides live vs. simulated and
- * surfaces that via the incident's `hotspotSource`.
+ * Source: the public NIFC (National Interagency Fire Center) active-incident
+ * feed — an ArcGIS Online FeatureServer that needs no API key and sends CORS
+ * headers, so the browser can call it directly. This replaces the NASA FIRMS
+ * plan, which requires a MAP_KEY that can take days to arrive; the NIFC feed
+ * is instant, keyless, and returns real current incidents (name, acreage,
+ * discovery time) across the US.
+ *
+ * The live feed is queried per incident for its surrounding area. When no real
+ * incidents are present (or the feed is unreachable), the app falls back to
+ * deterministic simulated detections so the map never looks broken mid-demo;
+ * the incident's `hotspotSource` tells the UI which one it is seeing.
  */
 
-/** A single parsed detection, or a simulated one. */
 export interface HotspotResult {
   hotspots: Hotspot[];
   source: HotspotSource;
@@ -52,65 +54,112 @@ export function computeBBox(
   };
 }
 
-interface FirmsDetection {
-  latitude?: number | string;
-  longitude?: number | string;
-  frp?: number | string;
-  confidence?: number | string;
-  acq_date?: string;
-  acq_time?: number | string;
-  satellite?: string;
-  instrument?: string;
+/** NIFC active-incident layer (points with name/acreage/discovery attrs). */
+const NIFC_LAYER =
+  "https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/EGP_Active_Incidents_Prod_Public_View/FeatureServer/0/query";
+/** How far around an incident to look for live detections (~33 km). */
+const LIVE_MARGIN_DEG = 0.3;
+
+/** Intensity proxy (MW) from an incident's acreage, log-scaled. */
+function intensityFromAcres(acres: number | null): number {
+  if (!acres || acres <= 0) return 10;
+  const value = Math.round(3 + Math.log10(acres + 1) * 8);
+  return Math.min(45, Math.max(3, value));
 }
 
-/** Map a FIRMS confidence value ("h"/"n"/"l" or a MODIS 0–100 number). */
-function confidenceLabel(
-  confidence: number | string | undefined,
-): Hotspot["confidence"] {
-  const value = String(confidence ?? "").trim().toLowerCase();
-  if (value === "h" || value === "high") return "high";
-  if (value === "l" || value === "low") return "low";
-  const numeric = Number(value);
-  if (Number.isFinite(numeric) && value !== "") {
-    if (numeric >= 80) return "high";
-    if (numeric >= 40) return "nominal";
-    return "low";
-  }
-  return "nominal";
+/** NIFC discovery timestamps look like "2026-08-13 05:3052 UTC". */
+function formatNifcTime(raw: unknown): string {
+  const text = String(raw ?? "").trim();
+  const match = /^(\d{4}-\d{2}-\d{2})(?:\s+(\d{2}):(\d{2}))?/.exec(text);
+  if (!match) return "recent";
+  const time = match[2] ? `${match[2]}:${match[3]} UTC` : "";
+  return time ? `${match[1]} ${time}` : match[1];
 }
 
-/** Parse a FIRMS area-API JSON payload into `Hotspot`s (skips malformed rows). */
-export function parseFirmsPayload(data: unknown): Hotspot[] {
-  if (!Array.isArray(data)) return [];
+interface NifcProperties {
+  Name?: string;
+  DailyAcres?: number | null;
+  CalculatedAcres?: number | null;
+  Discovery_Date?: string | null;
+  Sit209_Report_Status?: string | null;
+}
+
+interface NifcFeature {
+  geometry?: { type?: string; coordinates?: unknown };
+  properties?: NifcProperties;
+}
+
+/** Parse the feed's GeoJSON payload into `Hotspot`s (skips malformed rows). */
+export function parseNifcPayload(data: unknown): Hotspot[] {
+  if (!data || typeof data !== "object") return [];
+  const collection = data as { features?: unknown };
+  if (!Array.isArray(collection.features)) return [];
   const out: Hotspot[] = [];
-  for (const item of data) {
-    if (!item || typeof item !== "object") continue;
-    const d = item as FirmsDetection;
-    const lat = Number(d.latitude);
-    const lng = Number(d.longitude);
+  for (const item of collection.features) {
+    const feature = item as NifcFeature;
+    const coords = feature.geometry?.coordinates;
+    if (!Array.isArray(coords) || coords.length < 2) continue;
+    const lng = Number(coords[0]);
+    const lat = Number(coords[1]);
     if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
-    const frp = Number(d.frp);
-    const rawTime = d.acq_time == null ? "" : String(d.acq_time);
-    const time = rawTime.padStart(4, "0");
-    const acquiredAt = rawTime
-      ? `${d.acq_date ?? "—"} ${time.slice(0, 2)}:${time.slice(2)} UTC`
-      : d.acq_date ?? "—";
+    const props = feature.properties ?? {};
+    const acres = props.DailyAcres ?? props.CalculatedAcres ?? null;
+    const numericAcres =
+      typeof acres === "number" && Number.isFinite(acres) ? acres : null;
+    const active = Boolean(props.Sit209_Report_Status);
+    const confidence =
+      numericAcres !== null && numericAcres >= 100
+        ? "high"
+        : numericAcres !== null && numericAcres >= 10
+          ? "nominal"
+          : active
+            ? "nominal"
+            : "low";
     out.push({
-      id: `${lat.toFixed(5)},${lng.toFixed(5)},${time}`,
+      id: `nifc-${lat.toFixed(4)},${lng.toFixed(4)}`,
       lat,
       lng,
-      frp: Number.isFinite(frp) ? Math.max(0, Math.round(frp * 10) / 10) : 0,
-      confidence: confidenceLabel(d.confidence),
-      acquiredAt,
-      satellite: d.satellite
-        ? `${d.instrument ?? "VIIRS"}-${d.satellite}`
-        : d.instrument ?? "VIIRS",
+      frp: intensityFromAcres(numericAcres),
+      confidence,
+      acquiredAt: formatNifcTime(props.Discovery_Date),
+      satellite: "NIFC",
+      name: props.Name?.trim() || undefined,
     });
   }
   return out;
 }
 
-/** Deduplicate by rounded position and cap the render count (FRP-first). */
+/**
+ * Query the NIFC feed for active incidents around `perimeter`. Returns an
+ * empty array on any failure (offline, timeout, empty area) so the caller can
+ * fall back to simulation.
+ */
+export async function fetchLiveHotspots(perimeter: LatLng[]): Promise<Hotspot[]> {
+  const bounds = computeBBox(perimeter, LIVE_MARGIN_DEG);
+  const params = new URLSearchParams({
+    where: "1=1",
+    outFields: "Name,DailyAcres,CalculatedAcres,Discovery_Date,Sit209_Report_Status",
+    returnGeometry: "true",
+    f: "geojson",
+    geometry: `${bounds.west.toFixed(4)},${bounds.south.toFixed(4)},${bounds.east.toFixed(4)},${bounds.north.toFixed(4)}`,
+    geometryType: "esriGeometryEnvelope",
+    spatialRel: "esriSpatialRelIntersects",
+    inSR: "4326",
+    outSR: "4326",
+  });
+  try {
+    const response = await fetch(`${NIFC_LAYER}?${params}`, {
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!response.ok) return [];
+    const payload: unknown = await response.json().catch(() => null);
+    return parseNifcPayload(payload);
+  } catch {
+    return [];
+  }
+}
+
+/** Deduplicate by rounded position and cap the render count (intensity-first). */
 export function dedupeHotspots(hotspots: Hotspot[], max = 150): Hotspot[] {
   const seen = new Set<string>();
   const out: Hotspot[] = [];
@@ -137,7 +186,7 @@ function mulberry32(seed: number): () => number {
 
 /**
  * Deterministic simulated detections: a hot cluster at the fire front plus a
- * sparser band along the current perimeter — what a real VIIRS pass would
+ * sparser band along the current perimeter — what a real detection pass would
  * roughly look like. Used only when live data isn't available.
  */
 export function buildMockHotspots(
@@ -159,7 +208,7 @@ export function buildMockHotspots(
       frp: Math.round(frp * 10) / 10,
       confidence: rand() < 0.55 ? "high" : rand() < 0.85 ? "nominal" : "low",
       acquiredAt: `${t.toISOString().slice(0, 10)} ${hh}:${mm} UTC`,
-      satellite: "VIIRS-SNPP",
+      satellite: "simulated",
     });
   };
   // Hottest, densest detections at the active front.

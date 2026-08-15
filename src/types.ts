@@ -29,7 +29,7 @@ export type AlertSeverity = "critical" | "warning" | "advisory";
 /** Where an incident's hotspot layer came from. */
 export type HotspotSource = "live" | "mock";
 
-/** A single satellite fire detection (NASA FIRMS VIIRS / MODIS). */
+/** A single fire detection — from a live feed (NIFC) or simulated. */
 export interface Hotspot {
   id: string;
   lat: number;
@@ -39,8 +39,10 @@ export interface Hotspot {
   confidence: "high" | "nominal" | "low";
   /** Detection time, e.g. "2026-08-15 14:25 UTC". */
   acquiredAt: string;
-  /** Sensor, e.g. "VIIRS-NPP". */
+  /** Source sensor/feed, e.g. "NIFC". */
   satellite: string;
+  /** Incident name when the detection comes from a named fire. */
+  name?: string;
 }
 
 export interface RiskZone {

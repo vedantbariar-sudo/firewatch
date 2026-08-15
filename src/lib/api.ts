@@ -1,10 +1,8 @@
 import { mockScenarios } from "@/data/mock";
-import { api } from "@/convex/_generated/api";
-import { convex } from "@/lib/convex";
 import {
   buildMockHotspots,
   dedupeHotspots,
-  parseFirmsPayload,
+  fetchLiveHotspots,
 } from "@/lib/hotspots";
 import {
   assignRecommended,
@@ -20,11 +18,11 @@ import type { FireIncident, FireScenario, Hotspot, HotspotSource } from "@/types
  * The frontend never imports `src/data/mock.ts` directly — it goes through this
  * module, which mimics a remote API. Today it builds each incident from the
  * scenario record by running the spread simulation (`src/lib/spread.ts`) and
- * pulling live data from two streams — Open-Meteo weather (client-side) and
- * NASA FIRMS satellite hotspots (server-side via a Convex action) — falling
- * back to authored/simulated data when either is offline. When the prediction
- * backend is ready, replace the bodies of these functions with `fetch()` calls
- * against it; the rest of the app does not need to change.
+ * pulling live data from two keyless feeds — Open-Meteo weather and the public
+ * NIFC active-incident layer — falling back to authored/simulated data when
+ * either is offline. When the prediction backend is ready, replace the bodies
+ * of these functions with `fetch()` calls against it; the rest of the app does
+ * not need to change.
  */
 
 const simulateLatency = (ms = 350) =>
@@ -33,20 +31,17 @@ const simulateLatency = (ms = 350) =>
 /** Built incidents are cached per session so repeated loads stay stable. */
 const incidentCache = new Map<string, Promise<FireIncident>>();
 
-/** Live VIIRS detections when available; deterministic simulation otherwise. */
+/** Live NIFC detections when available; deterministic simulation otherwise. */
 async function loadHotspotsFor(
   scenario: FireScenario,
 ): Promise<{ hotspots: Hotspot[]; source: HotspotSource }> {
   try {
-    const result = await convex.action(api.hotspots.fetchFirmsHotspots, {
-      points: scenario.perimeter,
-    });
-    const live = parseFirmsPayload(result.payload);
+    const live = await fetchLiveHotspots(scenario.perimeter);
     if (live.length > 0) {
       return { hotspots: dedupeHotspots(live), source: "live" };
     }
   } catch {
-    // Action unavailable or the proxy failed — fall through to simulation.
+    // Feed unreachable — fall through to simulation.
   }
   return {
     hotspots: buildMockHotspots(scenario.perimeter, scenario.fireFront),

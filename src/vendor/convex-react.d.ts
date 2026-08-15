@@ -23,11 +23,6 @@ export interface ConvexFunctionReference {
 
 export class ConvexReactClient {
   constructor(url: string);
-  /** Call a Convex action (server-side function). */
-  action<Action extends ConvexFunctionReference>(
-    action: Action,
-    args: Action["_args"],
-  ): Promise<Action["_returnType"]>;
 }
 
 /** Reactive query hook — returns the query's return type (or undefined while loading). */

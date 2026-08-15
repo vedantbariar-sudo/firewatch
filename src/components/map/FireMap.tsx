@@ -347,8 +347,10 @@ export function FireMap({
                 }}
               >
                 <Tooltip sticky>
-                  FRP {hotspot.frp} MW · {hotspot.satellite} ·{" "}
-                  {hotspot.acquiredAt}
+                  {hotspot.name
+                    ? `${hotspot.name} · ${hotspot.frp} MW`
+                    : `FRP ${hotspot.frp} MW`}{" "}
+                  · {hotspot.satellite} · {hotspot.acquiredAt}
                 </Tooltip>
               </CircleMarker>
             ))}
@@ -397,8 +399,8 @@ export function FireMap({
             }}
           />
           {incident.hotspotSource === "live"
-            ? "VIIRS hotspots · live"
-            : "VIIRS hotspots · simulated"}
+            ? "NIFC fire detections · live"
+            : "Fire detections · simulated"}
         </div>
       )}
 
@@ -462,7 +464,7 @@ export function FireMap({
           {visible.hotspots && incident.hotspots.length > 0 && (
             <div className="flex items-center gap-2">
               <span className="h-2.5 w-2.5 rounded-full bg-orange-500" />
-              Satellite hotspots
+              Fire detections
             </div>
           )}
         </div>

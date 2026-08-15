@@ -2,14 +2,14 @@ import assert from "node:assert";
 import {
   buildMockHotspots,
   computeBBox,
-  parseFirmsPayload,
+  parseNifcPayload,
 } from "@/lib/hotspots";
 import { mockScenarios } from "@/data/mock";
 
 /**
- * Regression tests for the satellite hotspot feed (src/lib/hotspots.ts).
- * The live FIRMS fetch itself is network-dependent, so these cover the pure
- * pieces: bbox math, payload parsing, and the deterministic mock fallback.
+ * Regression tests for the fire-detection feed (src/lib/hotspots.ts).
+ * The live NIFC fetch itself is network-dependent, so these cover the pure
+ * pieces: bbox math, GeoJSON parsing, and the deterministic mock fallback.
  */
 
 test("computeBBox covers the points with a margin", () => {
@@ -32,64 +32,71 @@ test("computeBBox handles an empty polygon", () => {
   assert.ok(bounds.north > bounds.south);
 });
 
-test("parseFirmsPayload maps VIIRS JSON fields", () => {
-  const payload = [
-    {
-      latitude: 34.256,
-      longitude: -117.178,
-      frp: 18.4,
-      confidence: "h",
-      acq_date: "2026-08-15",
-      acq_time: 1425,
-      satellite: "NPP",
-      instrument: "VIIRS",
-    },
-    {
-      latitude: 34.26,
-      longitude: -117.17,
-      frp: 5.2,
-      confidence: "n",
-      acq_date: "2026-08-15",
-      acq_time: 1425,
-      satellite: "NPP",
-      instrument: "VIIRS",
-    },
-    // Malformed row — must be skipped, not crash.
-    { latitude: "nope", longitude: 1, frp: 3 },
-    null,
-  ];
-  const hotspots = parseFirmsPayload(payload);
+test("parseNifcPayload maps a real feed response", () => {
+  const payload = {
+    type: "FeatureCollection",
+    features: [
+      {
+        type: "Feature",
+        id: 1,
+        geometry: { type: "Point", coordinates: [-116.7, 33.75] },
+        properties: {
+          Name: "PINE COVE",
+          DailyAcres: 2450,
+          Discovery_Date: "2026-08-13 05:3052 UTC",
+          Sit209_Report_Status: "A",
+        },
+      },
+      {
+        type: "Feature",
+        id: 2,
+        geometry: { type: "Point", coordinates: [-116.8, 33.74] },
+        properties: {
+          Name: "IDYLLWILD RX",
+          DailyAcres: null,
+          Discovery_Date: "2026-08-12 18:4511 UTC",
+          Sit209_Report_Status: null,
+        },
+      },
+      // Malformed row — must be skipped, not crash.
+      { type: "Feature", id: 3, geometry: { type: "Point" }, properties: {} },
+      { type: "Feature", id: 4, geometry: null, properties: null },
+    ],
+  };
+  const hotspots = parseNifcPayload(payload);
   assert.equal(hotspots.length, 2);
-  const first = hotspots[0];
-  assert.equal(first.frp, 18.4);
-  assert.equal(first.confidence, "high");
-  assert.equal(first.acquiredAt, "2026-08-15 14:25 UTC");
-  assert.equal(first.satellite, "VIIRS-NPP");
-  assert.ok(first.id.includes("34.256"));
-  assert.equal(hotspots[1].confidence, "nominal");
+  const big = hotspots[0];
+  assert.equal(big.name, "PINE COVE");
+  assert.equal(big.lat, 33.75);
+  assert.equal(big.lng, -116.7);
+  assert.equal(big.satellite, "NIFC");
+  assert.equal(big.confidence, "high");
+  // NIFC timestamps are mangled (":3052") — we keep the sane HH:MM part.
+  assert.equal(big.acquiredAt, "2026-08-13 05:30 UTC");
+  assert.ok(big.frp >= 3 && big.frp <= 45, `intensity proxy sane (${big.frp})`);
+  assert.equal(hotspots[1].confidence, "low");
+  assert.equal(hotspots[1].name, "IDYLLWILD RX");
 });
 
-test("parseFirmsPayload handles MODIS numeric confidence and missing time", () => {
-  const hotspots = parseFirmsPayload([
-    {
-      latitude: 33.7,
-      longitude: -116.7,
-      frp: 30,
-      confidence: 92,
-      acq_date: "2026-08-14",
-      satellite: "Aqua",
-      instrument: "MODIS",
-    },
-  ]);
-  assert.equal(hotspots.length, 1);
-  assert.equal(hotspots[0].confidence, "high");
-  assert.equal(hotspots[0].satellite, "MODIS-Aqua");
-  assert.equal(hotspots[0].acquiredAt, "2026-08-14");
+test("parseNifcPayload intensity scales with acreage and caps", () => {
+  const make = (acres: number | null) =>
+    parseNifcPayload({
+      features: [
+        {
+          geometry: { type: "Point", coordinates: [-117, 34] },
+          properties: { Name: "X", DailyAcres: acres },
+        },
+      ],
+    })[0];
+  assert.ok(make(5).frp < make(5000).frp, "bigger fire reads hotter");
+  assert.equal(make(1_000_000).frp, 45, "intensity caps at 45");
+  assert.equal(make(null).frp, 10, "unknown acreage uses a default");
 });
 
-test("parseFirmsPayload rejects non-array input", () => {
-  assert.deepEqual(parseFirmsPayload(null), []);
-  assert.deepEqual(parseFirmsPayload({ latitude: 1 }), []);
+test("parseNifcPayload rejects non-collection input", () => {
+  assert.deepEqual(parseNifcPayload(null), []);
+  assert.deepEqual(parseNifcPayload({ features: "nope" }), []);
+  assert.deepEqual(parseNifcPayload([1, 2, 3]), []);
 });
 
 test("mock hotspots are deterministic, near the fire, and sane", () => {
