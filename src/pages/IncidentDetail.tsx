@@ -4,7 +4,6 @@ import { EvacuationPanel } from "@/components/dashboard/EvacuationPanel";
 import { MapToolbar } from "@/components/dashboard/MapToolbar";
 import { Panel } from "@/components/dashboard/Panel";
 import { SituationPanel } from "@/components/dashboard/SituationPanel";
-import { IncidentLog } from "@/components/incident-log/IncidentLog";
 import { ALL_LAYERS, FireMap } from "@/components/map/FireMap";
 import type { LayerState } from "@/components/map/FireMap";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -150,8 +149,6 @@ export default function IncidentDetail() {
                 {incident.description}
               </p>
             </Panel>
-
-            <IncidentLog incidentId={incident.id} />
           </div>
 
           {/* Right rail */}
