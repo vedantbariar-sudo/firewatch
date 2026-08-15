@@ -25,7 +25,8 @@
     "noPropertyAccessFromIndexSignature": false,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "convex/react": ["./src/vendor/convex-react.d.ts"]
     }
   },
   "include": ["src", "vly-toolbar-readonly.tsx"]
