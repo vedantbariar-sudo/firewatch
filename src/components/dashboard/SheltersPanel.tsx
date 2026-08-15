@@ -46,9 +46,11 @@ export function SheltersPanel({
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="text-sm font-medium leading-5">{shelter.name}</p>
-                    <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
-                      <Users className="size-3" />
+                    <p className="text-[15px] font-semibold leading-6">
+                      {shelter.name}
+                    </p>
+                    <p className="mt-0.5 flex items-center gap-1 text-[13px] text-muted-foreground">
+                      <Users className="size-3.5" />
                       {shelter.occupied} / {shelter.capacity} occupied
                     </p>
                   </div>

@@ -8,7 +8,6 @@ import type { FireIncident } from "@/types";
 import logo from "@/assets/logo.svg";
 import {
   ArrowRight,
-  BellRing,
   Flame,
   Route,
   Satellite,
@@ -25,41 +24,36 @@ const NAV_LINKS = [
 const FEATURES = [
   {
     icon: Satellite,
-    title: "Predictive spread modeling",
-    body: "Satellite thermal imaging, live weather, and terrain are fused into a rolling 24-hour spread forecast — not just where the fire is, but where it will be.",
+    title: "See where the fire is",
+    body: "A live map shows the fire, the areas at risk, and how the fire is expected to spread over the next day.",
   },
   {
     icon: Route,
-    title: "Dynamic evacuation routing",
-    body: "Evacuation corridors are re-ranked with every model run. When the forecast shifts, the recommended route changes with it — ahead of the fire, not behind it.",
+    title: "Know your route",
+    body: "The safest evacuation route is picked for you, and updated automatically as the fire moves.",
   },
   {
     icon: Wind,
-    title: "Live weather & risk",
-    body: "Wind direction, humidity, and fire-behavior outlooks update with each model run, so incident teams see the conditions driving the burn, not just the perimeter.",
-  },
-  {
-    icon: BellRing,
-    title: "Shared operations log",
-    body: "Every update, order, and comment lands in one timeline. Incident command posts once; the whole team acts on the same picture.",
+    title: "Weather in plain words",
+    body: "Wind, heat, and humidity are explained simply, so everyone understands what is driving the fire.",
   },
 ];
 
 const STEPS = [
   {
     step: "01",
-    title: "Ingest",
-    body: "Thermal satellite passes, NWS weather streams, and terrain data feed the model continuously throughout the incident.",
+    title: "We watch",
+    body: "Satellite images and weather data are checked around the clock.",
   },
   {
     step: "02",
-    title: "Predict",
-    body: "The spread model projects risk zones in six-hour steps out to 24 hours, accounting for wind, humidity, and topography.",
+    title: "We predict",
+    body: "A model shows where the fire is most likely to go over the next 24 hours.",
   },
   {
     step: "03",
-    title: "Act",
-    body: "Recommended evacuation routes, shelter status, and alerts publish to the operations console in real time.",
+    title: "You know what to do",
+    body: "Clear routes and alerts reach you before the fire does.",
   },
 ];
 
@@ -118,7 +112,7 @@ export default function Landing() {
               className="cursor-pointer"
               onClick={launch}
             >
-              Launch console
+              See the live map
               <ArrowRight className="size-4" />
             </Button>
           </div>
@@ -139,9 +133,9 @@ export default function Landing() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
               >
-                <span className="inline-flex items-center gap-2 rounded-full border border-orange-500/30 bg-orange-500/10 px-3 py-1 text-xs font-medium text-orange-400">
+                <span className="inline-flex items-center gap-2 rounded-full border border-orange-500/30 bg-orange-500/10 px-3 py-1 text-sm font-medium text-orange-400">
                   <span className="size-1.5 animate-pulse rounded-full bg-orange-400" />
-                  Live wildfire intelligence · simulated demo data
+                  Live wildfire information · demo data
                 </span>
                 <h1 className="mt-6 text-4xl font-semibold tracking-tight sm:text-5xl lg:text-6xl">
                   Know where the fire is going{" "}
@@ -150,9 +144,8 @@ export default function Landing() {
                   </span>
                 </h1>
                 <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-muted-foreground sm:text-lg">
-                  FireWatch fuses satellite thermal imaging, live weather, and
-                  terrain into a 24-hour spread forecast — and turns it into
-                  evacuation routes that keep communities ahead of the fire.
+                  FireWatch shows you where a wildfire is, where it is heading,
+                  and the safest way out — updated as conditions change.
                 </p>
                 <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
                   <Button
@@ -161,7 +154,7 @@ export default function Landing() {
                     className="cursor-pointer"
                     onClick={launch}
                   >
-                    Launch the console
+                    See the live map
                     <ArrowRight className="size-4" />
                   </Button>
                   <Button
@@ -171,7 +164,7 @@ export default function Landing() {
                     className="cursor-pointer"
                     onClick={browse}
                   >
-                    Browse incidents
+                    Browse fires
                   </Button>
                 </div>
               </motion.div>
@@ -212,9 +205,9 @@ export default function Landing() {
                   </span>
                 </div>
               </div>
-              <p className="mt-3 text-center text-xs text-muted-foreground">
-                Forecast map from the operations console — risk zones, active
-                perimeter, and recommended evacuation routes, one click away.
+              <p className="mt-3 text-center text-sm text-muted-foreground">
+                A live look at the fire map — where the fire is, where it is
+                going, and the best way out.
               </p>
             </motion.div>
           </div>
@@ -224,10 +217,10 @@ export default function Landing() {
         <section className="border-y border-border/60 bg-card/40">
           <div className="mx-auto grid max-w-6xl grid-cols-2 gap-px overflow-hidden px-4 py-8 sm:grid-cols-4 lg:px-6">
             {[
-              { value: "24 h", label: "Forecast horizon" },
-              { value: "3", label: "Incidents tracked" },
-              { value: "4,820", label: "Acres under active model" },
-              { value: "2", label: "Shelters staged" },
+              { value: "24 hours", label: "Forecast window" },
+              { value: "3", label: "Fires tracked" },
+              { value: "4,820", label: "Acres being tracked" },
+              { value: "2", label: "Shelters ready" },
             ].map((stat) => (
               <div key={stat.label} className="px-4 py-2 text-center">
                 <p className="text-2xl font-semibold tabular-nums tracking-tight">
@@ -242,15 +235,15 @@ export default function Landing() {
         {/* Features */}
         <section id="product" className="mx-auto max-w-6xl scroll-mt-20 px-4 py-20 lg:px-6">
           <div className="max-w-2xl">
-            <p className="text-xs font-medium uppercase tracking-wider text-orange-400">
+            <p className="text-sm font-medium uppercase tracking-wide text-orange-400">
               The product
             </p>
             <h2 className="mt-2 text-3xl font-semibold tracking-tight">
-              Everything an incident team needs, in one console.
+              A clear picture, for everyone.
             </h2>
-            <p className="mt-3 text-sm leading-6 text-muted-foreground">
-              Built for the people coordinating the response: the map, the
-              model, the routes, and the log — together.
+            <p className="mt-3 text-[15px] leading-7 text-muted-foreground">
+              The map, the routes, and the alerts — designed to be easy to
+              understand at a glance.
             </p>
           </div>
           <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -262,8 +255,8 @@ export default function Landing() {
                 <span className="flex size-9 items-center justify-center rounded-lg border border-orange-500/25 bg-orange-500/10 text-orange-400">
                   <feature.icon className="size-4" />
                 </span>
-                <h3 className="mt-4 text-sm font-semibold">{feature.title}</h3>
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                <h3 className="mt-4 text-base font-semibold">{feature.title}</h3>
+                <p className="mt-2 text-[15px] leading-7 text-muted-foreground">
                   {feature.body}
                 </p>
               </div>
@@ -275,12 +268,12 @@ export default function Landing() {
         <section id="how" className="border-y border-border/60 bg-card/40">
           <div className="mx-auto max-w-6xl scroll-mt-20 px-4 py-20 lg:px-6">
             <div className="max-w-2xl">
-              <p className="text-xs font-medium uppercase tracking-wider text-orange-400">
-                How it works
-              </p>
-              <h2 className="mt-2 text-3xl font-semibold tracking-tight">
-                From satellite pass to evacuation order.
-              </h2>
+            <p className="text-sm font-medium uppercase tracking-wide text-orange-400">
+              How it works
+            </p>
+            <h2 className="mt-2 text-3xl font-semibold tracking-tight">
+              From the satellite to your front door.
+            </h2>
             </div>
             <div className="mt-10 grid gap-4 md:grid-cols-3">
               {STEPS.map((item) => (
@@ -291,7 +284,7 @@ export default function Landing() {
                   <h3 className="mt-2 text-lg font-semibold tracking-tight">
                     {item.title}
                   </h3>
-                  <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                  <p className="mt-2 text-[15px] leading-7 text-muted-foreground">
                     {item.body}
                   </p>
                 </div>
@@ -308,11 +301,11 @@ export default function Landing() {
               className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(249,115,22,0.12),transparent_65%)]"
             />
             <h2 className="relative text-3xl font-semibold tracking-tight">
-              Your team&apos;s next incident starts here.
+              See it for yourself.
             </h2>
-            <p className="relative mx-auto mt-3 max-w-xl text-sm leading-6 text-muted-foreground">
-              Open the operations console and see the Ridge Fire forecast in
-              motion — spread, risk, routes, shelters, and the shared log.
+            <p className="relative mx-auto mt-3 max-w-xl text-[15px] leading-7 text-muted-foreground">
+              Open the live map and watch the forecast in motion — where the
+              fire is going and the safest way out.
             </p>
             <Button
               type="button"
@@ -320,12 +313,12 @@ export default function Landing() {
               className="relative mt-7 cursor-pointer"
               onClick={launch}
             >
-              Launch the console
+              Open the live map
               <ArrowRight className="size-4" />
             </Button>
-            <p className="relative mt-4 text-[11px] text-muted-foreground/70">
+            <p className="relative mt-4 text-xs text-muted-foreground/80">
               Demo only — all data is simulated. FireWatch is not an emergency
-              alerting service.
+              service.
             </p>
           </div>
         </section>
@@ -344,7 +337,7 @@ export default function Landing() {
             </span>
           </div>
           <p className="text-xs text-muted-foreground">
-            Built for incident teams · Simulated data for demonstration purposes
+            Simulated data for demonstration purposes
           </p>
           <p className="text-xs text-muted-foreground">© 2026 FireWatch</p>
         </div>

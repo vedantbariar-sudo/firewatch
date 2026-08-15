@@ -40,7 +40,7 @@ function IncidentRow({ incident }: { incident: FireIncident }) {
         </span>
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="font-semibold tracking-tight">{incident.name}</h3>
+            <h3 className="text-base font-semibold tracking-tight">{incident.name}</h3>
             <span
               className={cn(
                 "rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
@@ -50,42 +50,40 @@ function IncidentRow({ incident }: { incident: FireIncident }) {
               {statusMeta.label}
             </span>
           </div>
-          <p className="mt-0.5 truncate text-xs text-muted-foreground">
+          <p className="mt-0.5 truncate text-[13px] text-muted-foreground">
             {incident.locationLabel} · {incident.county}
           </p>
         </div>
-      </div>
-
-      <div className="hidden shrink-0 grid-cols-[100px_110px_90px_90px] items-center gap-6 text-right md:grid">
+      </div>        <div className="hidden shrink-0 grid-cols-[100px_110px_90px_90px] items-center gap-6 text-right md:grid">
         <div>
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
             Acres
           </p>
-          <p className="text-sm font-semibold tabular-nums">
+          <p className="text-[15px] font-semibold tabular-nums">
             {incident.stats.acresBurned.toLocaleString()}
           </p>
         </div>
         <div>
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
             Containment
           </p>
-          <p className="text-sm font-semibold tabular-nums">
+          <p className="text-[15px] font-semibold tabular-nums">
             {incident.stats.containmentPct}%
           </p>
         </div>
         <div>
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
             Risk
           </p>
-          <p className="text-sm font-semibold" style={{ color: risk.color }}>
+          <p className="text-[15px] font-semibold" style={{ color: risk.color }}>
             {risk.label}
           </p>
         </div>
         <div>
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
             Updated
           </p>
-          <p className="text-sm text-foreground/80">
+          <p className="text-[15px] text-foreground/80">
             {timeAgo(new Date(incident.reportedAt))}
           </p>
         </div>
@@ -159,7 +157,7 @@ export default function Incidents() {
                 type="button"
                 onClick={() => setFilter(item.value)}
                 className={cn(
-                  "rounded-md px-3 py-1 text-xs font-medium transition-colors",
+                  "rounded-md px-3.5 py-1.5 text-[13px] font-medium transition-colors",
                   filter === item.value
                     ? "bg-accent text-foreground"
                     : "text-muted-foreground hover:text-foreground",

@@ -24,11 +24,11 @@ export function StatsStrip({ incident }: StatsStripProps) {
   return (
     <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-border/70 bg-border/70 sm:grid-cols-3 lg:grid-cols-6">
       {items.map((item) => (
-        <div key={item.label} className="bg-card/50 px-4 py-3">
-          <p className="text-[11px] uppercase tracking-wider text-muted-foreground">
+        <div key={item.label} className="bg-card/50 px-4 py-3.5">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
             {item.label}
           </p>
-          <p className="mt-0.5 text-xl font-semibold tabular-nums tracking-tight">
+          <p className="mt-1 text-2xl font-semibold tabular-nums tracking-tight">
             {item.value}
           </p>
         </div>

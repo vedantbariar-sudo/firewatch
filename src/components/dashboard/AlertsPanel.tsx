@@ -29,7 +29,7 @@ export function AlertsPanel({ incident }: { incident: FireIncident }) {
               )}
             >
               <div className="flex items-center justify-between gap-3">
-                <p className="text-sm font-medium leading-5">{alert.title}</p>
+                <p className="text-[15px] font-semibold leading-6">{alert.title}</p>
                 <span
                   className={cn(
                     "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
@@ -44,10 +44,10 @@ export function AlertsPanel({ incident }: { incident: FireIncident }) {
                   {meta.label}
                 </span>
               </div>
-              <p className="mt-1 text-xs leading-5 text-muted-foreground">
+              <p className="mt-1 text-[13px] leading-6 text-muted-foreground">
                 {alert.detail}
               </p>
-              <p className="mt-1.5 text-[11px] text-muted-foreground/70">
+              <p className="mt-1.5 text-xs text-muted-foreground/80">
                 {alert.source} · {timeAgo(Date.now() - alert.ageMin * 60_000)}
               </p>
             </li>

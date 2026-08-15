@@ -22,8 +22,8 @@ export function EvacuationPanel({
       title="Evacuation routes"
       icon={<Route className="size-4 text-emerald-400" />}
       right={
-        <span className="text-[11px] text-muted-foreground">
-          as of forecast {incident.forecast[stepIndex]?.label}
+        <span className="text-xs text-muted-foreground">
+          {incident.forecast[stepIndex]?.label}
         </span>
       }
       contentClassName="p-2"
@@ -53,20 +53,20 @@ export function EvacuationPanel({
                       className={cn("mt-1.5 size-2 shrink-0 rounded-full", meta.dot)}
                     />
                     <div>
-                      <p className="text-sm font-medium leading-5">
+                      <p className="text-[15px] font-semibold leading-6">
                         {route.name}
                       </p>
-                      <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
-                        <MapPin className="size-3" />
+                      <p className="mt-0.5 flex items-center gap-1 text-[13px] text-muted-foreground">
+                        <MapPin className="size-3.5" />
                         {route.communities.join(" · ")}
                       </p>
                     </div>
                   </div>
                   <div className="shrink-0 text-right">
-                    <p className="text-sm font-semibold tabular-nums">
+                    <p className="text-base font-semibold tabular-nums">
                       {route.etaMin} min
                     </p>
-                    <p className="text-[11px] text-muted-foreground">
+                    <p className="text-xs text-muted-foreground">
                       {route.distanceKm} km
                     </p>
                   </div>
@@ -77,7 +77,7 @@ export function EvacuationPanel({
                   </span>
                 )}
                 {route.note && (
-                  <p className="mt-1.5 text-xs leading-5 text-muted-foreground">
+                  <p className="mt-1.5 text-[13px] leading-6 text-muted-foreground">
                     {route.note}
                   </p>
                 )}

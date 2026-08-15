@@ -284,7 +284,7 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
                   disabled={isLoading}
                 >
                   <UserX className="mr-2 h-4 w-4" />
-                  Continue as Guest
+                  Try it as a guest
                 </Button>
               </CardContent>
             </form>

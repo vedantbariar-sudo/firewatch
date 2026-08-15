@@ -23,10 +23,10 @@ function Stat({
 }) {
   return (
     <div>
-      <p className="text-[11px] uppercase tracking-wider text-muted-foreground">
+      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
         {label}
       </p>
-      <p className="mt-0.5 text-lg font-semibold tabular-nums tracking-tight">
+      <p className="mt-0.5 text-xl font-semibold tabular-nums tracking-tight">
         {value}
       </p>
       {sub}
@@ -84,8 +84,8 @@ export function SituationPanel({ incident, stepIndex }: SituationPanelProps) {
             label="Satellite pass"
             value={timeAgo(Date.now() - stats.lastSatellitePassMin * 60_000)}
             sub={
-              <p className="mt-0.5 text-[11px] text-muted-foreground">
-                latest thermal
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                last check
               </p>
             }
           />
@@ -93,7 +93,7 @@ export function SituationPanel({ incident, stepIndex }: SituationPanelProps) {
 
         {/* Weather */}
         <div className="p-4">
-          <p className="text-[11px] uppercase tracking-wider text-muted-foreground">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
             Weather — {step.label}
           </p>
           <div className="mt-2 grid grid-cols-[auto_1fr] items-start gap-4">
@@ -151,10 +151,10 @@ export function SituationPanel({ incident, stepIndex }: SituationPanelProps) {
 
         {/* Model outlook */}
         <div className="p-4">
-          <p className="text-[11px] uppercase tracking-wider text-muted-foreground">
-            Spread model — {step.spreadKmh} km/h
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            Fire spread — {step.spreadKmh} km/h
           </p>
-          <p className="mt-1.5 text-sm leading-6 text-foreground/90">
+          <p className="mt-1.5 text-[15px] leading-7 text-foreground/90">
             {step.riskNote}
           </p>
           <div className="mt-3 flex flex-wrap gap-1.5">

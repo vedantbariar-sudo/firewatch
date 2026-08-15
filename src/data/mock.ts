@@ -90,7 +90,7 @@ export const mockIncidents: FireIncident[] = [
         ],
       },
       {
-        label: "+6h",
+        label: "In 6 hours",
         hoursFromNow: 6,
         riskLevel: "extreme",
         riskNote:
@@ -156,7 +156,7 @@ export const mockIncidents: FireIncident[] = [
         ],
       },
       {
-        label: "+12h",
+        label: "In 12 hours",
         hoursFromNow: 12,
         riskLevel: "catastrophic",
         riskNote:
@@ -222,7 +222,7 @@ export const mockIncidents: FireIncident[] = [
         ],
       },
       {
-        label: "+24h",
+        label: "In 24 hours",
         hoursFromNow: 24,
         riskLevel: "catastrophic",
         riskNote:
@@ -505,7 +505,7 @@ export const mockIncidents: FireIncident[] = [
         ],
       },
       {
-        label: "+6h",
+        label: "In 6 hours",
         hoursFromNow: 6,
         riskLevel: "high",
         riskNote:
@@ -566,7 +566,7 @@ export const mockIncidents: FireIncident[] = [
         ],
       },
       {
-        label: "+12h",
+        label: "In 12 hours",
         hoursFromNow: 12,
         riskLevel: "extreme",
         riskNote:
@@ -627,7 +627,7 @@ export const mockIncidents: FireIncident[] = [
         ],
       },
       {
-        label: "+24h",
+        label: "In 24 hours",
         hoursFromNow: 24,
         riskLevel: "extreme",
         riskNote:
@@ -864,7 +864,7 @@ export const mockIncidents: FireIncident[] = [
         ],
       },
       {
-        label: "+6h",
+        label: "In 6 hours",
         hoursFromNow: 6,
         riskLevel: "moderate",
         riskNote: "No predicted spread. Hotspot grid complete along Old Highway 80.",
@@ -920,7 +920,7 @@ export const mockIncidents: FireIncident[] = [
         ],
       },
       {
-        label: "+12h",
+        label: "In 12 hours",
         hoursFromNow: 12,
         riskLevel: "low",
         riskNote: "Cooling overnight. Risk downgraded; advisory may lift by morning.",
@@ -963,7 +963,7 @@ export const mockIncidents: FireIncident[] = [
         ],
       },
       {
-        label: "+24h",
+        label: "In 24 hours",
         hoursFromNow: 24,
         riskLevel: "low",
         riskNote: "No modeled spread. Demob planning in progress.",

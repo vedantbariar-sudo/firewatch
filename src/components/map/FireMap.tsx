@@ -296,11 +296,11 @@ export function FireMap({
       </MapContainer>
 
       {/* Forecast HUD chip */}
-      <div className="pointer-events-none absolute left-3 top-3 z-[800] rounded-md border border-border/60 bg-[#0a0f16]/85 px-2.5 py-1.5 text-xs text-foreground/90 backdrop-blur">
-        <span className="font-medium text-foreground">Forecast {step.label}</span>
-        <span className="mx-1.5 text-border">·</span>
+      <div className="pointer-events-none absolute left-3 top-3 z-[800] rounded-md border border-border/60 bg-[#0a0f16]/85 px-3 py-2 text-sm text-foreground/90 backdrop-blur">
+        <span className="font-medium text-foreground">{step.label}</span>
+        <span className="mx-2 text-border">·</span>
         <span>{step.spreadKmh} km/h spread</span>
-        <span className="mx-1.5 text-border">·</span>
+        <span className="mx-2 text-border">·</span>
         <span className="font-medium" style={{ color: RISK_META[step.riskLevel].color }}>
           {RISK_META[step.riskLevel].label} risk
         </span>
@@ -308,7 +308,7 @@ export function FireMap({
 
       {/* Legend */}
       {showLegend && (
-        <div className="pointer-events-none absolute bottom-3 left-3 z-[800] max-w-[220px] rounded-lg border border-border/60 bg-[#0a0f16]/85 p-3 text-[11px] leading-5 text-foreground/80 backdrop-blur">
+        <div className="pointer-events-none absolute bottom-3 left-3 z-[800] max-w-[260px] rounded-lg border border-border/60 bg-[#0a0f16]/85 p-3.5 text-[13px] leading-6 text-foreground/90 backdrop-blur">
           {visible.perimeter && (
             <div className="flex items-center gap-2">
               <span className="h-[3px] w-4 rounded-full border-t-2 border-dashed border-amber-300" />

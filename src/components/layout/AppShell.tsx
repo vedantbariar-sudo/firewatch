@@ -30,7 +30,7 @@ function useClock() {
 
 function navClass({ isActive }: { isActive: boolean }) {
   return cn(
-    "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+    "rounded-md px-3.5 py-2 text-[15px] font-medium transition-colors",
     isActive
       ? "bg-accent text-foreground"
       : "text-muted-foreground hover:text-foreground",
@@ -79,12 +79,12 @@ export function AppShell({ children, active }: AppShellProps) {
             </span>
           </Link>
 
-          <nav className="ml-2 hidden items-center gap-1 sm:flex">
+          <nav className="ml-3 hidden items-center gap-1.5 sm:flex">
             <NavLink to="/dashboard" className={navClass} end>
-              Operations
+              Dashboard
             </NavLink>
             <NavLink to="/incidents" className={navClass}>
-              Incidents
+              Fires
             </NavLink>
           </nav>
 

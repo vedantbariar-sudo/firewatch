@@ -66,7 +66,7 @@ export function MapToolbar({
         >
           <TabsList className="h-8">
             {steps.map((step, index) => (
-              <TabsTrigger key={step} value={String(index)} className="px-2.5 text-xs">
+              <TabsTrigger key={step} value={String(index)} className="px-3 text-[13px]">
                 {step}
               </TabsTrigger>
             ))}
@@ -75,9 +75,9 @@ export function MapToolbar({
       </div>
 
       <div className="flex flex-wrap items-center gap-1.5">
-        <span className="mr-1 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-          <Layers className="size-3.5" />
-          Layers
+        <span className="mr-1 flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+          <Layers className="size-4" />
+          Show:
         </span>
         {layerButtons.map(({ key, label }) => (
           <Toggle
@@ -89,7 +89,7 @@ export function MapToolbar({
               onLayersChange({ ...layers, [key]: pressed })
             }
             aria-label={`Toggle ${label} layer`}
-            className="h-7 text-xs"
+            className="h-8 px-3 text-[13px]"
           >
             {label}
           </Toggle>
