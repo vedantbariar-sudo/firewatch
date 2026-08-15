@@ -8,6 +8,7 @@ import { SituationPanel } from "@/components/dashboard/SituationPanel";
 import { AlertsPanel } from "@/components/dashboard/AlertsPanel";
 import { EvacuationPanel } from "@/components/dashboard/EvacuationPanel";
 import { SheltersPanel } from "@/components/dashboard/SheltersPanel";
+import { GuideToShelter } from "@/components/dashboard/GuideToShelter";
 import { StatsStrip } from "@/components/dashboard/StatsStrip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -154,7 +155,16 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="grid gap-4 lg:grid-cols-2">
+        <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
+          <GuideToShelter
+            key={incident.id}
+            incident={incident}
+            stepIndex={stepIndex}
+            selectedRouteId={selectedRouteId}
+            selectedShelterId={selectedShelterId}
+            onSelectRoute={setSelectedRouteId}
+            onSelectShelter={setSelectedShelterId}
+          />
           <EvacuationPanel
             incident={incident}
             stepIndex={stepIndex}
