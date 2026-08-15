@@ -79,14 +79,15 @@ function FitBounds({ incident }: { incident: FireIncident }) {
   return null;
 }
 
-function shelterIcon(status: ShelterStatus) {
+function shelterIcon(status: ShelterStatus, selected = false) {
   const color =
     status === "open" ? "#34d399" : status === "at-capacity" ? "#fbbf24" : "#f87171";
+  const size = selected ? 40 : 32;
   return L.divIcon({
     className: "fw-shelter-marker",
-    html: `<div class="relative flex h-8 w-8 items-center justify-center rounded-full border-2 bg-[#05070c]/95 shadow-[0_0_0_3px_rgba(0,0,0,0.45)]" style="border-color:${color}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg></div>`,
-    iconSize: [32, 32],
-    iconAnchor: [16, 16],
+    html: `<div class="relative flex items-center justify-center rounded-full border-2 bg-[#05070c]/95 shadow-[0_0_0_3px_rgba(0,0,0,0.45)] ${selected ? "ring-2 ring-white/80" : ""}" style="border-color:${color};width:${size}px;height:${size}px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg></div>`,
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size / 2],
   });
 }
 
@@ -115,6 +116,7 @@ interface FireMapProps {
   incident: FireIncident;
   stepIndex?: number;
   selectedRouteId?: string | null;
+  selectedShelterId?: string | null;
   onSelectRoute?: (routeId: string | null) => void;
   onSelectShelter?: (shelterId: string | null) => void;
   onOpenIncident?: () => void;
@@ -130,6 +132,7 @@ export function FireMap({
   incident,
   stepIndex = 0,
   selectedRouteId,
+  selectedShelterId,
   onSelectRoute,
   onSelectShelter,
   onOpenIncident,
@@ -278,7 +281,7 @@ export function FireMap({
               <Marker
                 key={shelter.id}
                 position={shelter.location}
-                icon={shelterIcon(shelter.status)}
+                icon={shelterIcon(shelter.status, shelter.id === selectedShelterId)}
                 eventHandlers={{
                   click: () => onSelectShelter?.(shelter.id),
                 }}

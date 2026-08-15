@@ -4,6 +4,7 @@ import { EvacuationPanel } from "@/components/dashboard/EvacuationPanel";
 import { MapToolbar } from "@/components/dashboard/MapToolbar";
 import { Panel } from "@/components/dashboard/Panel";
 import { SituationPanel } from "@/components/dashboard/SituationPanel";
+import { GuideToShelter } from "@/components/dashboard/GuideToShelter";
 import { ALL_LAYERS, FireMap } from "@/components/map/FireMap";
 import type { LayerState } from "@/components/map/FireMap";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -23,10 +24,14 @@ export default function IncidentDetail() {
   );
   const [stepIndex, setStepIndex] = useState(0);
   const [layers, setLayers] = useState<LayerState>(ALL_LAYERS);
+  const [selectedRouteId, setSelectedRouteId] = useState<string | null>(null);
+  const [selectedShelterId, setSelectedShelterId] = useState<string | null>(null);
 
   useEffect(() => {
     setIncident("loading");
     setStepIndex(0);
+    setSelectedRouteId(null);
+    setSelectedShelterId(null);
     if (!id) {
       setIncident(null);
       return;
@@ -140,6 +145,10 @@ export default function IncidentDetail() {
                 incident={incident}
                 stepIndex={stepIndex}
                 layers={layers}
+                selectedRouteId={selectedRouteId}
+                selectedShelterId={selectedShelterId}
+                onSelectRoute={setSelectedRouteId}
+                onSelectShelter={setSelectedShelterId}
                 className="h-[420px] lg:h-[500px]"
               />
             </div>
@@ -149,6 +158,15 @@ export default function IncidentDetail() {
                 {incident.description}
               </p>
             </Panel>
+
+            <GuideToShelter
+              incident={incident}
+              stepIndex={stepIndex}
+              selectedRouteId={selectedRouteId}
+              selectedShelterId={selectedShelterId}
+              onSelectRoute={setSelectedRouteId}
+              onSelectShelter={setSelectedShelterId}
+            />
           </div>
 
           {/* Right rail */}
