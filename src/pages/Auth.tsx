@@ -18,7 +18,7 @@ import {
   ShieldCheck,
   UserRound,
 } from "lucide-react";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 
 interface AuthProps {
@@ -35,9 +35,15 @@ function resolveRedirectAfterAuth(
   return fallback;
 }
 
-/** Turn Convex Auth error codes into messages anyone can understand. */
+/** Turn Convex Auth errors into messages anyone can understand. */
 function getAuthErrorMessage(error: unknown): string {
   const code = (error as { code?: string } | null)?.code;
+  const message = error instanceof Error ? error.message : "";
+  // The library throws a plain Error (no code) when the entered code doesn't
+  // match any active one — expired, already used, or replaced by a resend.
+  if (/could not verify code/i.test(message)) {
+    return "That code didn't work — it may have expired or already been used. Request a new one and try again.";
+  }
   switch (code) {
     case "AUTH_INVALID_EMAIL":
       return "That email address doesn't look right. Please check it and try again.";
@@ -72,6 +78,27 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
+  // Synchronous guard: OTP codes are single-use, so submitting the same code
+  // twice (6th-digit onChange + form submit racing in the same tick) makes the
+  // second call fail with "Could not verify code". A ref is checked and set
+  // before any await, unlike `isLoading`, which updates asynchronously.
+  const submittingRef = useRef(false);
+
+  const runGuarded = async (fn: () => Promise<void>) => {
+    if (submittingRef.current) return;
+    submittingRef.current = true;
+    setIsLoading(true);
+    setError(null);
+    try {
+      await fn();
+    } catch (err) {
+      setError(getAuthErrorMessage(err));
+    } finally {
+      submittingRef.current = false;
+      setIsLoading(false);
+    }
+  };
+
   // Once signed in (email OTP or guest), send the user where they were going.
   useEffect(() => {
     if (!authLoading && isAuthenticated) {
@@ -80,9 +107,7 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
   }, [authLoading, isAuthenticated, navigate, redirect]);
 
   const sendCode = async (resend = false) => {
-    setIsLoading(true);
-    setError(null);
-    try {
+    await runGuarded(async () => {
       await signIn("email-otp", { email });
       setStep("code");
       setNotice(
@@ -90,37 +115,24 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
           ? "A new code is on its way."
           : `We emailed a 6-digit code to ${email}.`,
       );
-    } catch (err) {
-      setError(getAuthErrorMessage(err));
-    } finally {
-      setIsLoading(false);
-    }
+    });
   };
 
-  const verifyCode = async () => {
-    if (isLoading) return;
-    setIsLoading(true);
-    setError(null);
-    try {
-      await signIn("email-otp", { email, code });
+  const verifyCode = async (enteredCode?: string) => {
+    // The OTP onChange fires before setCode re-renders, so it passes the fresh
+    // value explicitly — otherwise the auto-verify on the 6th digit would send
+    // the previous 5-digit code and always fail with "Could not verify code".
+    const codeToVerify = enteredCode ?? code;
+    await runGuarded(async () => {
+      await signIn("email-otp", { email, code: codeToVerify });
       // The redirect happens automatically once the session is confirmed.
-    } catch (err) {
-      setError(getAuthErrorMessage(err));
-    } finally {
-      setIsLoading(false);
-    }
+    });
   };
 
   const handleGuestSignIn = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
+    await runGuarded(async () => {
       await signIn("anonymous");
-    } catch (err) {
-      setError(getAuthErrorMessage(err));
-    } finally {
-      setIsLoading(false);
-    }
+    });
   };
 
   return (
@@ -224,7 +236,7 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
                     value={code}
                     onChange={(value) => {
                       setCode(value);
-                      if (value.length === 6) void verifyCode();
+                      if (value.length === 6) void verifyCode(value);
                     }}
                     disabled={isLoading}
                     autoFocus
