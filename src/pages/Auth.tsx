@@ -125,6 +125,10 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
   const sendCode = async (resend = false) => {
     await runGuarded(async () => {
       await signIn("email-otp", { email });
+      // Drop any previously entered (now-consumed) code and stale errors so
+      // the input never holds a code the server can no longer verify.
+      setCode("");
+      setError(null);
       setStep("code");
       setNotice(
         resend

@@ -1,4 +1,6 @@
 import { getAuthUserId } from "@convex-dev/auth/server";
+import { sha256 } from "@oslojs/crypto/sha2";
+import { encodeHexLowerCase } from "@oslojs/encoding";
 import { v } from "convex/values";
 import { mutation, query, QueryCtx } from "./_generated/server";
 
@@ -75,9 +77,15 @@ export const storePendingOtpCode = mutation({
 });
 
 /**
- * Demo-only: return the most recent unexpired OTP code for an email so the
- * auth page can display it when email delivery is unreliable. This exposes
- * the raw code to any caller — remove for production.
+ * Demo-only: return the most recent OTP code for an email so the auth page
+ * can display it when email delivery is unavailable. This exposes the raw
+ * code to any caller — remove for production.
+ *
+ * The code is only returned while Convex Auth's live verification row still
+ * exists. That row is deleted the moment the code is used (or replaced by a
+ * resend), so a consumed code can never linger in the UI and fail with
+ * "already been used" — the demo box simply disappears until a fresh code is
+ * requested.
  */
 export const getOtpDemoCode = query({
   args: { email: v.string() },
@@ -88,6 +96,22 @@ export const getOtpDemoCode = query({
       .order("desc")
       .first();
     if (pending === null || pending.expiresAt < Date.now()) {
+      return null;
+    }
+    // Hash the pending code the same way Convex Auth does and check the live
+    // verification row still exists and belongs to this email.
+    const hash = encodeHexLowerCase(
+      sha256(new TextEncoder().encode(pending.code)),
+    );
+    const live = await ctx.db
+      .query("authVerificationCodes")
+      .withIndex("code", (q) => q.eq("code", hash))
+      .unique();
+    if (
+      live === null ||
+      live.emailVerified !== email ||
+      live.expirationTime < Date.now()
+    ) {
       return null;
     }
     return { code: pending.code, expiresAt: pending.expiresAt };
