@@ -84,26 +84,24 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
-  // Synchronous guard: OTP codes are single-use, so submitting the same code
-  // twice (6th-digit onChange + form submit racing in the same tick) makes the
-  // second call fail with "Could not verify code". A ref is checked and set
-  // before any await, unlike `isLoading`, which updates asynchronously.
+  // Synchronous guard: OTP codes are single-use and the verify button submits
+  // on click, so a second click while the first request is still in flight
+  // must not fire again. A ref is checked and set before any await, unlike
+  // `isLoading`, which updates asynchronously.
   const submittingRef = useRef(false);
-  // The input-otp control re-dispatches onChange after a successful verify,
-  // which would re-submit the *same consumed code* ~1s later and fail with
-  // "already been used". Once a code verifies, remember it and never send it
-  // again — a fresh code (or a changed input) resets this.
-  const verifiedCodeRef = useRef<string | null>(null);
 
-  const runGuarded = async (fn: () => Promise<void>) => {
-    if (submittingRef.current) return;
+  // Resolves true when `fn` ran without throwing, false otherwise.
+  const runGuarded = async (fn: () => Promise<void>): Promise<boolean> => {
+    if (submittingRef.current) return false;
     submittingRef.current = true;
     setIsLoading(true);
     setError(null);
     try {
       await fn();
+      return true;
     } catch (err) {
       setError(getAuthErrorMessage(err));
+      return false;
     } finally {
       submittingRef.current = false;
       setIsLoading(false);
@@ -134,7 +132,6 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
       // the input never holds a code the server can no longer verify.
       setCode("");
       setError(null);
-      verifiedCodeRef.current = null;
       setStep("code");
       setNotice(
         resend
@@ -144,20 +141,20 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
     });
   };
 
-  const verifyCode = async (enteredCode?: string) => {
-    // The OTP onChange fires before setCode re-renders, so it passes the fresh
-    // value explicitly — otherwise the auto-verify on the 6th digit would send
-    // the previous 5-digit code and always fail with "Could not verify code".
-    const codeToVerify = enteredCode ?? code;
-    // Skip re-sending a code that already verified successfully (input-otp
-    // re-dispatches onChange after success) — it's consumed and would fail.
-    if (codeToVerify === verifiedCodeRef.current) return;
-    await runGuarded(async () => {
-      await signIn("email-otp", { email, code: codeToVerify });
-      verifiedCodeRef.current = codeToVerify;
+  const verifyCode = async () => {
+    if (code.length < 6) return;
+    const ok = await runGuarded(async () => {
+      await signIn("email-otp", { email, code });
       signedInHereRef.current = true;
       // The redirect happens automatically once the session is confirmed.
     });
+    if (!ok) {
+      // Convex Auth deletes the verification row on ANY attempt, so a failed
+      // attempt means the entered code is dead — retrying it will always
+      // fail. Clear the input and point the user at a fresh code instead of
+      // leaving them clicking a button that can never succeed.
+      setCode("");
+    }
   };
 
   const handleGuestSignIn = async () => {
@@ -275,10 +272,7 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
                   <InputOTP
                     maxLength={6}
                     value={code}
-                    onChange={(value) => {
-                      setCode(value);
-                      if (value.length === 6) void verifyCode(value);
-                    }}
+                    onChange={(value) => setCode(value)}
                     disabled={isLoading}
                     autoFocus
                   >
@@ -318,7 +312,6 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
                       setStep("email");
                       setCode("");
                       setError(null);
-                      verifiedCodeRef.current = null;
                     }}
                     className="flex cursor-pointer items-center text-muted-foreground transition-colors hover:text-foreground"
                     disabled={isLoading}
