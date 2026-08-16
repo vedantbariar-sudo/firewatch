@@ -55,3 +55,41 @@ export const resetSignInAttempts = mutation({
     }
   },
 });
+
+/**
+ * Record the raw OTP code issued for an email so the auth page can show it in
+ * demo mode (see getOtpDemoCode). Replaces any previously pending code.
+ */
+export const storePendingOtpCode = mutation({
+  args: { email: v.string(), code: v.string(), expiresAt: v.number() },
+  handler: async (ctx, { email, code, expiresAt }) => {
+    const existing = await ctx.db
+      .query("pendingOtpCodes")
+      .withIndex("email", (q) => q.eq("email", email))
+      .collect();
+    for (const row of existing) {
+      await ctx.db.delete(row._id);
+    }
+    await ctx.db.insert("pendingOtpCodes", { email, code, expiresAt });
+  },
+});
+
+/**
+ * Demo-only: return the most recent unexpired OTP code for an email so the
+ * auth page can display it when email delivery is unreliable. This exposes
+ * the raw code to any caller — remove for production.
+ */
+export const getOtpDemoCode = query({
+  args: { email: v.string() },
+  handler: async (ctx, { email }) => {
+    const pending = await ctx.db
+      .query("pendingOtpCodes")
+      .withIndex("email", (q) => q.eq("email", email))
+      .order("desc")
+      .first();
+    if (pending === null || pending.expiresAt < Date.now()) {
+      return null;
+    }
+    return { code: pending.code, expiresAt: pending.expiresAt };
+  },
+});

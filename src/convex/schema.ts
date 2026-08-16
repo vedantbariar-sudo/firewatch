@@ -22,6 +22,15 @@ const schema = defineSchema(
     ...authTables, // do not remove or modify
 
     // the users table is the default users table that is brought in by the authTables
+    // Demo-mode OTP store: the raw code is recorded here when it is issued so
+    // the auth page can display it when email delivery is unreliable. The
+    // code is also stored hashed by Convex Auth and verified normally.
+    pendingOtpCodes: defineTable({
+      email: v.string(),
+      code: v.string(),
+      expiresAt: v.number(),
+    }).index("email", ["email"]),
+
     users: defineTable({
       name: v.optional(v.string()), // name of the user. do not remove
       image: v.optional(v.string()), // image of the user. do not remove

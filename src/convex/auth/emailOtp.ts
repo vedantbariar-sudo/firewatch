@@ -78,7 +78,20 @@ export const emailOtp = Email({
       console.error("[emailOtp] could not reset sign-in attempt counter:", error);
     }
 
-    // 2) Primary delivery: the VLY email gateway. It emails exactly the code
+    // 2) Record the raw code so the auth page can show it in demo mode when
+    //    email delivery is unreliable (see getOtpDemoCode). Verification still
+    //    uses the hashed copy Convex Auth stores.
+    try {
+      await ctx.runMutation(api.users.storePendingOtpCode, {
+        email,
+        code: token,
+        expiresAt: Date.now() + OTP_LIFETIME_MIN * 60 * 1000,
+      });
+    } catch (error) {
+      console.error("[emailOtp] could not store demo code:", error);
+    }
+
+    // 3) Primary delivery: the VLY email gateway. It emails exactly the code
     //    Convex generated and will verify, so what the user types is
     //    guaranteed to match. Mirrors the @vly-ai/integrations email client's
     //    request so no SDK import is needed inside the auth bundle.
@@ -115,7 +128,7 @@ export const emailOtp = Email({
       );
     }
 
-    // 3) Fallback: Freebuff OTP relay, kept for compatibility.
+    // 4) Fallback: Freebuff OTP relay, kept for compatibility.
     const apiKey = process.env.FREEBUFF_EMAIL_API_KEY;
     if (!apiKey) {
       throw new Error(

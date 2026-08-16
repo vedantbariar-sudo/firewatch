@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import { api } from "@/convex/_generated/api";
 import { useAuth } from "@/hooks/use-auth";
 import logo from "@/assets/logo.svg";
 import {
@@ -19,6 +20,7 @@ import {
   UserRound,
 } from "lucide-react";
 import { Suspense, useEffect, useRef, useState } from "react";
+import { useQuery } from "convex/react";
 import { useNavigate, useSearchParams } from "react-router";
 
 interface AuthProps {
@@ -74,6 +76,10 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
   const [step, setStep] = useState<"email" | "code">("email");
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
+  // Demo mode: the issued code is stored server-side (getOtpDemoCode) so it
+  // can be shown here when email delivery is unreliable. It is verified the
+  // same way as the emailed code.
+  const demoCode = useQuery(api.users.getOtpDemoCode, { email });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -236,6 +242,15 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
                 {notice && (
                   <p className="rounded-md border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-400">
                     {notice}
+                  </p>
+                )}
+
+                {demoCode && (
+                  <p className="rounded-md border border-orange-500/30 bg-orange-500/10 px-3 py-2 text-sm text-orange-400">
+                    Demo mode — your code is{" "}
+                    <span className="font-mono text-base font-semibold tracking-wider">
+                      {demoCode.code}
+                    </span>
                   </p>
                 )}
 
