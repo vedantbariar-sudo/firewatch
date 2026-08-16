@@ -7,12 +7,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
-import { api } from "@/convex/_generated/api";
 import { useAuth } from "@/hooks/use-auth";
 import logo from "@/assets/logo.svg";
 import {
-  ArrowLeft,
   ArrowRight,
   Loader2,
   Mail,
@@ -20,7 +17,6 @@ import {
   UserRound,
 } from "lucide-react";
 import { Suspense, useEffect, useRef, useState } from "react";
-import { useQuery } from "convex/react";
 import { useNavigate, useSearchParams } from "react-router";
 
 interface AuthProps {
@@ -39,29 +35,11 @@ function resolveRedirectAfterAuth(
 
 /** Turn Convex Auth errors into messages anyone can understand. */
 function getAuthErrorMessage(error: unknown): string {
-  const code = (error as { code?: string } | null)?.code;
   const message = error instanceof Error ? error.message : "";
-  // The library throws a plain Error (no code) when the entered code doesn't
-  // match any active one — expired, already used, or replaced by a resend.
-  if (/could not verify code/i.test(message)) {
-    return "That code didn't work — it may have expired or already been used. Request a new one and try again.";
+  if (message) {
+    return message;
   }
-  switch (code) {
-    case "AUTH_INVALID_EMAIL":
-      return "That email address doesn't look right. Please check it and try again.";
-    case "AUTH_CODE_INVALID":
-      return "That code doesn't match. Please double-check it and try again.";
-    case "AUTH_CODE_EXPIRED":
-      return "That code has expired. Request a new one and try again.";
-    case "AUTH_TOO_MANY_ATTEMPTS":
-      return "Too many attempts. Please wait a few minutes and try again.";
-    case "AUTH_RATE_LIMITED":
-      return "Too many requests. Please wait a moment and try again.";
-    default:
-      return error instanceof Error && error.message
-        ? error.message
-        : "Something went wrong. Please try again.";
-  }
+  return "Something went wrong. Please try again.";
 }
 
 function Auth({ redirectAfterAuth }: AuthProps = {}) {
@@ -73,46 +51,20 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
     redirectAfterAuth,
   );
 
-  const [step, setStep] = useState<"email" | "code">("email");
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [code, setCode] = useState("");
-  // Demo mode: the issued code is stored server-side (getOtpDemoCode) so it
-  // can be shown here when email delivery is unreliable. It is verified the
-  // same way as the emailed code.
-  const demoCode = useQuery(api.users.getOtpDemoCode, { email });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
 
-  // Synchronous guard: OTP codes are single-use and the verify button submits
-  // on click, so a second click while the first request is still in flight
-  // must not fire again. A ref is checked and set before any await, unlike
+  // Synchronous guard: prevents a second submit while the first request is
+  // still in flight. A ref is checked and set before any await, unlike
   // `isLoading`, which updates asynchronously.
   const submittingRef = useRef(false);
 
-  // Resolves true when `fn` ran without throwing, false otherwise.
-  const runGuarded = async (fn: () => Promise<void>): Promise<boolean> => {
-    if (submittingRef.current) return false;
-    submittingRef.current = true;
-    setIsLoading(true);
-    setError(null);
-    try {
-      await fn();
-      return true;
-    } catch (err) {
-      setError(getAuthErrorMessage(err));
-      return false;
-    } finally {
-      submittingRef.current = false;
-      setIsLoading(false);
-    }
-  };
-
-  // True once a sign-in completes on this page (email OTP or guest). The
-  // redirect only fires when the user authenticates *here* — or arrived with a
-  // destination (returnTo) already in mind — so an active session no longer
-  // makes the "Sign in" button bounce straight to the dashboard before the
-  // form can show.
+  // True once a sign-in completes on this page. The redirect only fires when
+  // the user authenticates *here* — or arrived with a destination (returnTo)
+  // already in mind — so an active session no longer makes the "Sign in"
+  // button bounce straight to the dashboard before the form can show.
   const signedInHereRef = useRef(false);
 
   // Once signed in, send the user where they were going.
@@ -125,43 +77,46 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
     }
   }, [authLoading, isAuthenticated, navigate, redirect, searchParams]);
 
-  const sendCode = async (resend = false) => {
-    await runGuarded(async () => {
-      await signIn("email-otp", { email });
-      // Drop any previously entered (now-consumed) code and stale errors so
-      // the input never holds a code the server can no longer verify.
-      setCode("");
-      setError(null);
-      setStep("code");
-      setNotice(
-        resend
-          ? "A new code is on its way."
-          : `We emailed a 6-digit code to ${email}.`,
-      );
-    });
-  };
+  const signInWithNameAndEmail = async () => {
+    const trimmedEmail = email.trim().toLowerCase();
+    if (!trimmedEmail || submittingRef.current) return;
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+      setError("Please enter a valid email address.");
+      return;
+    }
 
-  const verifyCode = async () => {
-    if (code.length < 6) return;
-    const ok = await runGuarded(async () => {
-      await signIn("email-otp", { email, code });
+    submittingRef.current = true;
+    setIsLoading(true);
+    setError(null);
+    try {
+      await signIn("credentials", {
+        email: trimmedEmail,
+        ...(name.trim() ? { name: name.trim() } : {}),
+      });
       signedInHereRef.current = true;
       // The redirect happens automatically once the session is confirmed.
-    });
-    if (!ok) {
-      // Convex Auth deletes the verification row on ANY attempt, so a failed
-      // attempt means the entered code is dead — retrying it will always
-      // fail. Clear the input and point the user at a fresh code instead of
-      // leaving them clicking a button that can never succeed.
-      setCode("");
+    } catch (err) {
+      setError(getAuthErrorMessage(err));
+    } finally {
+      submittingRef.current = false;
+      setIsLoading(false);
     }
   };
 
   const handleGuestSignIn = async () => {
-    await runGuarded(async () => {
+    if (submittingRef.current) return;
+    submittingRef.current = true;
+    setIsLoading(true);
+    setError(null);
+    try {
       await signIn("anonymous");
       signedInHereRef.current = true;
-    });
+    } catch (err) {
+      setError(getAuthErrorMessage(err));
+    } finally {
+      submittingRef.current = false;
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -188,149 +143,77 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
             Welcome to FireWatch
           </CardTitle>
           <CardDescription className="mx-auto max-w-[280px]">
-            {step === "email"
-              ? "Sign in with your email — no password needed."
-              : `Enter the 6-digit code sent to ${email}.`}
+            Sign in with your name and email — no passwords or codes.
           </CardDescription>
         </CardHeader>
 
         <CardContent className="pb-6">
-          {step === "email" ? (
-            <form
-              onSubmit={(event) => {
-                event.preventDefault();
-                void sendCode();
-              }}
-            >
-              <div className="space-y-4">
-                <label className="block">
-                  <span className="mb-1.5 block text-sm font-medium">
-                    Email address
-                  </span>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      name="email"
-                      type="email"
-                      placeholder="you@example.com"
-                      value={email}
-                      onChange={(event) => setEmail(event.target.value)}
-                      className="h-11 pl-9"
-                      disabled={isLoading}
-                      autoComplete="email"
-                      autoFocus
-                      required
-                    />
-                  </div>
-                </label>
-
-                {error && <p className="text-sm text-destructive">{error}</p>}
-
-                <Button
-                  type="submit"
-                  className="h-11 w-full cursor-pointer"
-                  disabled={isLoading || !email.trim()}
-                >
-                  {isLoading ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <>
-                      Continue
-                      <ArrowRight className="h-4 w-4" />
-                    </>
-                  )}
-                </Button>
-              </div>
-            </form>
-          ) : (
-            <form
-              onSubmit={(event) => {
-                event.preventDefault();
-                void verifyCode();
-              }}
-            >
-              <div className="space-y-4">
-                {notice && (
-                  <p className="rounded-md border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-400">
-                    {notice}
-                  </p>
-                )}
-
-                {demoCode && (
-                  <p className="rounded-md border border-orange-500/30 bg-orange-500/10 px-3 py-2 text-sm text-orange-400">
-                    Demo mode — your code is{" "}
-                    <span className="font-mono text-base font-semibold tracking-wider">
-                      {demoCode.code}
-                    </span>
-                  </p>
-                )}
-
-                <label className="block">
-                  <span className="mb-1.5 block text-sm font-medium">
-                    Verification code
-                  </span>
-                  <InputOTP
-                    maxLength={6}
-                    value={code}
-                    onChange={(value) => setCode(value)}
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              void signInWithNameAndEmail();
+            }}
+          >
+            <div className="space-y-4">
+              <label className="block">
+                <span className="mb-1.5 block text-sm font-medium">
+                  Your name{" "}
+                  <span className="text-muted-foreground">(optional)</span>
+                </span>
+                <div className="relative">
+                  <UserRound className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    name="name"
+                    type="text"
+                    placeholder="Alex Rivera"
+                    value={name}
+                    onChange={(event) => setName(event.target.value)}
+                    className="h-11 pl-9"
                     disabled={isLoading}
+                    autoComplete="name"
                     autoFocus
-                  >
-                    <InputOTPGroup className="w-full justify-between">
-                      {Array.from({ length: 6 }).map((_, index) => (
-                        <InputOTPSlot
-                          key={index}
-                          index={index}
-                          className="h-12 flex-1 text-base"
-                        />
-                      ))}
-                    </InputOTPGroup>
-                  </InputOTP>
-                </label>
-
-                {error && <p className="text-sm text-destructive">{error}</p>}
-
-                <Button
-                  type="submit"
-                  className="h-11 w-full cursor-pointer"
-                  disabled={isLoading || code.length < 6}
-                >
-                  {isLoading ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <>
-                      Verify &amp; sign in
-                      <ArrowRight className="h-4 w-4" />
-                    </>
-                  )}
-                </Button>
-
-                <div className="flex items-center justify-between text-sm">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setStep("email");
-                      setCode("");
-                      setError(null);
-                    }}
-                    className="flex cursor-pointer items-center text-muted-foreground transition-colors hover:text-foreground"
-                    disabled={isLoading}
-                  >
-                    <ArrowLeft className="mr-1 h-3.5 w-3.5" />
-                    Change email
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => void sendCode(true)}
-                    className="cursor-pointer font-medium text-primary hover:underline"
-                    disabled={isLoading}
-                  >
-                    Resend code
-                  </button>
+                  />
                 </div>
-              </div>
-            </form>
-          )}
+              </label>
+
+              <label className="block">
+                <span className="mb-1.5 block text-sm font-medium">
+                  Email address
+                </span>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    name="email"
+                    type="email"
+                    placeholder="you@example.com"
+                    value={email}
+                    onChange={(event) => setEmail(event.target.value)}
+                    className="h-11 pl-9"
+                    disabled={isLoading}
+                    autoComplete="email"
+                    required
+                  />
+                </div>
+              </label>
+
+              {error && <p className="text-sm text-destructive">{error}</p>}
+
+              <Button
+                type="submit"
+                className="h-11 w-full cursor-pointer"
+                disabled={isLoading || !email.trim()}
+              >
+                {isLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <>
+                    Sign in
+                    <ArrowRight className="h-4 w-4" />
+                  </>
+                )}
+              </Button>
+            </div>
+          </form>
 
           <div className="relative my-5">
             <div className="absolute inset-0 flex items-center">
@@ -367,7 +250,7 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
 
       <p className="mt-5 flex items-center gap-1.5 text-xs text-muted-foreground">
         <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" />
-        One-time codes only — no passwords stored.
+        No passwords stored — just your name and email.
       </p>
     </div>
   );
