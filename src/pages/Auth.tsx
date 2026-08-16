@@ -99,12 +99,22 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
     }
   };
 
-  // Once signed in (email OTP or guest), send the user where they were going.
+  // True once a sign-in completes on this page (email OTP or guest). The
+  // redirect only fires when the user authenticates *here* — or arrived with a
+  // destination (returnTo) already in mind — so an active session no longer
+  // makes the "Sign in" button bounce straight to the dashboard before the
+  // form can show.
+  const signedInHereRef = useRef(false);
+
+  // Once signed in, send the user where they were going.
   useEffect(() => {
     if (!authLoading && isAuthenticated) {
-      navigate(redirect);
+      const hasDestination = searchParams.get("returnTo") !== null;
+      if (signedInHereRef.current || hasDestination) {
+        navigate(redirect);
+      }
     }
-  }, [authLoading, isAuthenticated, navigate, redirect]);
+  }, [authLoading, isAuthenticated, navigate, redirect, searchParams]);
 
   const sendCode = async (resend = false) => {
     await runGuarded(async () => {
@@ -125,6 +135,7 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
     const codeToVerify = enteredCode ?? code;
     await runGuarded(async () => {
       await signIn("email-otp", { email, code: codeToVerify });
+      signedInHereRef.current = true;
       // The redirect happens automatically once the session is confirmed.
     });
   };
@@ -132,6 +143,7 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
   const handleGuestSignIn = async () => {
     await runGuarded(async () => {
       await signIn("anonymous");
+      signedInHereRef.current = true;
     });
   };
 
