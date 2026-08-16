@@ -89,6 +89,11 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
   // second call fail with "Could not verify code". A ref is checked and set
   // before any await, unlike `isLoading`, which updates asynchronously.
   const submittingRef = useRef(false);
+  // The input-otp control re-dispatches onChange after a successful verify,
+  // which would re-submit the *same consumed code* ~1s later and fail with
+  // "already been used". Once a code verifies, remember it and never send it
+  // again — a fresh code (or a changed input) resets this.
+  const verifiedCodeRef = useRef<string | null>(null);
 
   const runGuarded = async (fn: () => Promise<void>) => {
     if (submittingRef.current) return;
@@ -129,6 +134,7 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
       // the input never holds a code the server can no longer verify.
       setCode("");
       setError(null);
+      verifiedCodeRef.current = null;
       setStep("code");
       setNotice(
         resend
@@ -143,8 +149,12 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
     // value explicitly — otherwise the auto-verify on the 6th digit would send
     // the previous 5-digit code and always fail with "Could not verify code".
     const codeToVerify = enteredCode ?? code;
+    // Skip re-sending a code that already verified successfully (input-otp
+    // re-dispatches onChange after success) — it's consumed and would fail.
+    if (codeToVerify === verifiedCodeRef.current) return;
     await runGuarded(async () => {
       await signIn("email-otp", { email, code: codeToVerify });
+      verifiedCodeRef.current = codeToVerify;
       signedInHereRef.current = true;
       // The redirect happens automatically once the session is confirmed.
     });
@@ -308,6 +318,7 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
                       setStep("email");
                       setCode("");
                       setError(null);
+                      verifiedCodeRef.current = null;
                     }}
                     className="flex cursor-pointer items-center text-muted-foreground transition-colors hover:text-foreground"
                     disabled={isLoading}

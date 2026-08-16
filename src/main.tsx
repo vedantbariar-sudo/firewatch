@@ -9,6 +9,60 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter, Route, Routes, useLocation } from "react-router";
 import "./index.css";
 
+/**
+ * Auth token storage that survives environments where localStorage writes are
+ * blocked (e.g. the embedded Freebuff preview iframe, where third-party
+ * storage can reject writes — reads still work, so the app renders but a
+ * successful sign-in would silently fail to persist its tokens).
+ *
+ * localStorage is used when available; every write is mirrored to an
+ * in-memory Map so a blocked/quota-exhausted write can never break sign-in.
+ * Tradeoff: in a fully blocked environment the session doesn't survive a full
+ * page reload — acceptable for the demo.
+ */
+function createSafeStorage() {
+  const memory = new Map<string, string>();
+  let local: Storage | null = null;
+  try {
+    // Probe with a throwaway key so we only use localStorage when both reads
+    // and writes actually work here.
+    window.localStorage.setItem("__fw_probe__", "1");
+    window.localStorage.removeItem("__fw_probe__");
+    local = window.localStorage;
+  } catch {
+    local = null;
+  }
+  return {
+    getItem(key: string) {
+      try {
+        const value = local?.getItem(key);
+        if (value !== null && value !== undefined) return value;
+      } catch {
+        // fall through to memory
+      }
+      return memory.get(key) ?? null;
+    },
+    setItem(key: string, value: string) {
+      memory.set(key, value);
+      try {
+        local?.setItem(key, value);
+      } catch {
+        // storage blocked — memory copy is enough for this session
+      }
+    },
+    removeItem(key: string) {
+      memory.delete(key);
+      try {
+        local?.removeItem(key);
+      } catch {
+        // ignore
+      }
+    },
+  };
+}
+
+const safeStorage = createSafeStorage();
+
 // Lazy load route components for better code splitting
 const Landing = lazy(() => import("./pages/Landing.tsx"));
 const AuthPage = lazy(() => import("./pages/Auth.tsx"));
@@ -115,7 +169,7 @@ createRoot(document.getElementById("root")!).render(
       <ToolbarErrorBoundary>
         <VlyToolbar />
       </ToolbarErrorBoundary>
-      <ConvexAuthProvider client={convex}>
+      <ConvexAuthProvider client={convex} storage={safeStorage}>
         <BrowserRouter>
           <RouteSyncer />
           <Suspense fallback={<RouteLoading />}>
