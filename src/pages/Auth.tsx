@@ -61,19 +61,14 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
   // `isLoading`, which updates asynchronously.
   const submittingRef = useRef(false);
 
-  // True once a sign-in completes on this page. The redirect only fires when
-  // the user authenticates *here* — or arrived with a destination (returnTo)
-  // already in mind — so an active session no longer makes the "Sign in"
-  // button bounce straight to the dashboard before the form can show.
-  const signedInHereRef = useRef(false);
-
-  // Once signed in, send the user where they were going.
+  // Send an already-signed-in visitor to their destination when they arrived
+  // with one in mind (e.g. RequireAuth bounced them here). Without this, an
+  // active session would sit on the form forever. The form itself navigates
+  // directly on submit, so an active session never auto-bounces the "Sign in"
+  // button straight to the dashboard before the form can show.
   useEffect(() => {
-    if (!authLoading && isAuthenticated) {
-      const hasDestination = searchParams.get("returnTo") !== null;
-      if (signedInHereRef.current || hasDestination) {
-        navigate(redirect);
-      }
+    if (!authLoading && isAuthenticated && searchParams.get("returnTo") !== null) {
+      navigate(redirect);
     }
   }, [authLoading, isAuthenticated, navigate, redirect, searchParams]);
 
@@ -93,8 +88,11 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
         email: trimmedEmail,
         ...(name.trim() ? { name: name.trim() } : {}),
       });
-      signedInHereRef.current = true;
-      // The redirect happens automatically once the session is confirmed.
+      // Navigate straight to the destination. Don't wait for the auth-state
+      // effect to notice the change: when a session already existed, signing
+      // in again flips no state and the effect never fires, leaving the
+      // button looking dead.
+      navigate(redirect, { replace: true });
     } catch (err) {
       setError(getAuthErrorMessage(err));
     } finally {
@@ -110,7 +108,7 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
     setError(null);
     try {
       await signIn("anonymous");
-      signedInHereRef.current = true;
+      navigate(redirect, { replace: true });
     } catch (err) {
       setError(getAuthErrorMessage(err));
     } finally {
