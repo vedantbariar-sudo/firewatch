@@ -1,5 +1,4 @@
 import { Email } from "@convex-dev/auth/providers/Email";
-import axios from "axios";
 import { RandomReader, generateRandomString } from "@oslojs/crypto/random";
 import { api } from "../_generated/api";
 
@@ -47,6 +46,55 @@ function buildOtpEmail(appName: string, code: string) {
   return { text, html };
 }
 
+/**
+ * Send the sign-in code via Resend. Returns true when Resend accepted the
+ * email, false when the key is missing or the request failed.
+ *
+ * The body is built locally and contains exactly the `code` Convex generated
+ * and will verify — so the code in the inbox always matches what the server
+ * checks. Uses Resend's REST API directly (no SDK import inside the auth
+ * bundle).
+ */
+async function sendViaResend(email: string, code: string): Promise<boolean> {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    console.error("[emailOtp] RESEND_API_KEY not set");
+    return false;
+  }
+
+  const { text, html } = buildOtpEmail("FireWatch", code);
+  try {
+    const response = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        // Until a custom domain is verified, Resend only delivers from
+        // onboarding@resend.dev to the account owner's address — perfect for
+        // the hackathon. Set RESEND_FROM_EMAIL once a domain is verified.
+        from:
+          process.env.RESEND_FROM_EMAIL ?? "FireWatch <onboarding@resend.dev>",
+        to: [email],
+        subject: "Your FireWatch sign-in code",
+        text,
+        html,
+      }),
+    });
+    if (response.ok) {
+      console.log(`[emailOtp] code sent to ${email} via Resend`);
+      return true;
+    }
+    const body = await response.text().catch(() => "");
+    console.error(`[emailOtp] Resend failed (${response.status}): ${body}`);
+    return false;
+  } catch (error) {
+    console.error("[emailOtp] Resend request threw:", error);
+    return false;
+  }
+}
+
 export const emailOtp = Email({
   id: "email-otp",
   maxAge: 60 * OTP_LIFETIME_MIN, // 15 minutes
@@ -78,9 +126,9 @@ export const emailOtp = Email({
       console.error("[emailOtp] could not reset sign-in attempt counter:", error);
     }
 
-    // 2) Record the raw code so the auth page can show it in demo mode when
-    //    email delivery is unreliable (see getOtpDemoCode). Verification still
-    //    uses the hashed copy Convex Auth stores.
+    // 2) Record the raw code so the auth page can show it as a fallback when
+    //    email delivery is unavailable (see getOtpDemoCode). Verification
+    //    still uses the hashed copy Convex Auth stores.
     try {
       await ctx.runMutation(api.users.storePendingOtpCode, {
         email,
@@ -91,67 +139,15 @@ export const emailOtp = Email({
       console.error("[emailOtp] could not store demo code:", error);
     }
 
-    // 3) Primary delivery: the VLY email gateway. It emails exactly the code
-    //    Convex generated and will verify, so what the user types is
-    //    guaranteed to match. Mirrors the @vly-ai/integrations email client's
-    //    request so no SDK import is needed inside the auth bundle.
-    if (process.env.VLY_INTEGRATION_KEY) {
-      try {
-        const response = await fetch("https://integrations.vly.ai/v1/email/send", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${process.env.VLY_INTEGRATION_KEY}`,
-            "Content-Type": "application/json",
-            "X-Vly-Version": "0.1.0",
-          },
-          body: JSON.stringify({
-            to: [email],
-            from: "noreply@project.freebuff.dev",
-            subject: "Your FireWatch sign-in code",
-            ...buildOtpEmail("FireWatch", token),
-          }),
-        });
-        if (response.ok) {
-          console.log(`[emailOtp] code sent to ${email} via VLY email gateway`);
-          return;
-        }
-        const body = await response.text().catch(() => "");
-        console.error(
-          `[emailOtp] VLY email gateway failed (${response.status}): ${body}`,
-        );
-      } catch (error) {
-        console.error("[emailOtp] VLY email gateway threw:", error);
-      }
-    } else {
+    // 3) Primary delivery: Resend. Deliberately non-throwing — if email can't
+    //    be sent (missing key, invalid key, API error), the code stored above
+    //    is still shown in the app so sign-in remains possible during the
+    //    demo. The log line below says which path ran.
+    const sent = await sendViaResend(email, token);
+    if (!sent) {
       console.error(
-        "[emailOtp] VLY_INTEGRATION_KEY not set — falling back to OTP relay",
+        "[emailOtp] email delivery failed — the auth page will show the code in demo mode",
       );
-    }
-
-    // 4) Fallback: Freebuff OTP relay, kept for compatibility.
-    const apiKey = process.env.FREEBUFF_EMAIL_API_KEY;
-    if (!apiKey) {
-      throw new Error(
-        "Email sending is not configured — set VLY_INTEGRATION_KEY or FREEBUFF_EMAIL_API_KEY in the project Keys settings.",
-      );
-    }
-    try {
-      await axios.post(
-        "https://auth.freebuff.app/send_otp",
-        {
-          to: email,
-          otp: token,
-          appName: "FireWatch",
-        },
-        {
-          headers: {
-            "x-api-key": apiKey,
-          },
-        },
-      );
-      console.log(`[emailOtp] code sent to ${email} via Freebuff OTP relay`);
-    } catch (error) {
-      throw new Error(JSON.stringify(error));
     }
   },
 });
